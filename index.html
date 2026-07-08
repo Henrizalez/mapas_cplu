@@ -574,6 +574,31 @@
     flex-shrink:0;
   }
   .sdm-close:hover{ color: var(--ink); background: var(--panel-2); }
+
+
+  /* Botão flutuante: Minha localização */
+  #geolocate-btn{
+    position:absolute;
+    bottom:90px;
+    right:16px;
+    z-index:1050;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px; height:38px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    cursor:pointer;
+    color: var(--ink-dim);
+    transition: all .15s ease;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+  }
+  #geolocate-btn:hover{ border-color: var(--accent-dim); color: var(--ink); }
+  #geolocate-btn.active{ background: rgba(61,214,196,0.14); border-color: var(--accent); color: var(--accent); }
+  #geolocate-btn.loading{ animation: geo-spin 1s linear infinite; }
+  #geolocate-btn svg{ width:16px; height:16px; }
+  @keyframes geo-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
   .sdm-body{
     padding: 16px 20px 20px;
     overflow-y: auto;
@@ -768,6 +793,19 @@
   .agenda-area-item .agenda-setor-label{
     color: var(--ink);
     font-size:12.5px;
+  }
+  .agenda-setor-row.clickable{
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 5px 6px;
+    margin: 0 -6px;
+    transition: background .12s;
+  }
+  .agenda-setor-row.clickable:hover{
+    background: var(--panel-2);
+  }
+  .agenda-setor-row.clickable:hover .agenda-setor-cod{
+    color: var(--ink);
   }
 
 
@@ -1027,7 +1065,7 @@
     <div id="address-search">
       <div class="addr-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="addr-input" placeholder="Buscar endereço...">
+        <input type="text" id="addr-input" placeholder="Endereço ou código do setor...">
         <div id="addr-spinner" class="addr-spinner"></div>
         <span id="addr-clear" title="Limpar">&times;</span>
       </div>
@@ -1042,6 +1080,9 @@
     <div id="agenda-btn" title="Agenda do dia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/></svg>
       <span>Agenda do dia</span>
+    </div>
+    <div id="geolocate-btn" title="Minha localização">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
     </div>
     <div id="legend">
       <div class="legend-head" id="legend-toggle">Legenda de setores <span id="legend-arrow">&#9650;</span></div>
@@ -1324,8 +1365,9 @@ const state = {
   searchTerm: '',
   extraSearchTerm: '',
   showSectorLabels: true,
-  showEcopontos: true,
-  showEscolas: false
+  showEcopontos: false,
+  showEscolas: false,
+  showApoio: false
 };
 
 const subsUnicas = [...new Set(ROUTES.map(r => r.sub))].sort();
@@ -1539,6 +1581,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeSectorDetail(); closeAgendaDia(); }
 });
 
+
 // ---------- Popup: Agenda do Dia ----------
 // Mostra os setores que têm execução programada HOJE (data exata),
 // apenas para os serviços com hasDates: true. Abre automaticamente ao
@@ -1595,7 +1638,7 @@ function openAgendaDia(){
     html += `<div class="agenda-svc-bloco">
       <div class="agenda-svc-nome">${escapeHtml(svc.nome)}</div>`;
     setoresOrdenados.forEach(setor => {
-      html += `<div class="agenda-setor-row">
+      html += `<div class="agenda-setor-row clickable" onclick="navegarParaSetor('${escapeHtml(setor)}','${svc.id}')">
         <span class="agenda-setor-cod">${escapeHtml(setor)}</span>
       </div>`;
     });
@@ -1616,7 +1659,7 @@ function openAgendaDia(){
       html += `<div class="agenda-svc-bloco">
         <div class="agenda-svc-nome">Lavagem Especial</div>`;
       leepUnicos.forEach(r => {
-        html += `<div class="agenda-setor-row">
+        html += `<div class="agenda-setor-row clickable" onclick="navegarParaSetor('${escapeHtml(r.setor)}','leep')">
           <div class="agenda-area-item">
             <span class="agenda-setor-cod">${escapeHtml(r.setor)}</span>
             <span class="agenda-setor-label">${escapeHtml(r.nome || '(sem nome)')}</span>
@@ -1641,7 +1684,7 @@ function openAgendaDia(){
       html += `<div class="agenda-svc-bloco">
         <div class="agenda-svc-nome">Feiras Livres</div>`;
       feirasUnicas.forEach(r => {
-        html += `<div class="agenda-setor-row">
+        html += `<div class="agenda-setor-row clickable" onclick="navegarParaSetor('${escapeHtml(r.setor)}','feiras')">
           <div class="agenda-area-item">
             <span class="agenda-setor-cod">${escapeHtml(r.setor)}</span>
             <span class="agenda-setor-label">${escapeHtml(r.nome || '(sem nome)')}</span>
@@ -1927,7 +1970,7 @@ PONTOS_APOIO.forEach(p => {
 
 function updateApoioVisibility(){
   apoioMarkers.forEach(({ marker, sub }) => {
-    const shouldShow = state.service === 'varricao' && state.subs.has(sub);
+    const shouldShow = state.service === 'varricao' && state.showApoio && state.subs.has(sub);
     marker._isVisible = shouldShow;
     marker.setStyle({ opacity: shouldShow ? 1 : 0, fillOpacity: shouldShow ? 0.9 : 0 });
   });
@@ -2026,32 +2069,14 @@ function renderServiceCards(){
     el.appendChild(card);
 
     // Checkbox de números dos setores: aparece imediatamente abaixo do
-    // card do serviço, só quando esse serviço (com suporte a marcadores)
-    // está ativo
-    if (SECTOR_MARKER_SERVICES.includes(svc.id) && state.service === svc.id){
-      const checkboxRow = document.createElement('label');
-      checkboxRow.className = 'checkbox-row sector-labels-inline';
-      checkboxRow.id = 'sector-labels-checkbox-row';
-      checkboxRow.innerHTML = `
-        <input type="checkbox" id="sector-labels-checkbox" ${state.showSectorLabels ? 'checked' : ''}>
-        <span>Mostrar números dos setores no mapa</span>
-      `;
-      checkboxRow.addEventListener('click', (e) => e.stopPropagation());
-      checkboxRow.querySelector('input').addEventListener('change', (e) => {
-        state.showSectorLabels = e.target.checked;
-        renderAll();
-      });
-      el.appendChild(checkboxRow);
-    }
-
-    // Checkbox de ecopontos: só existe dentro do contexto de Varrição Manual
+    // Checkboxes de camadas extras — só na Varrição, em ordem alfabética
     if (svc.id === 'varricao' && state.service === 'varricao'){
       const ecoRow = document.createElement('label');
       ecoRow.className = 'checkbox-row sector-labels-inline';
       ecoRow.id = 'ecopontos-checkbox-row';
       ecoRow.innerHTML = `
         <input type="checkbox" id="ecopontos-checkbox" ${state.showEcopontos ? 'checked' : ''}>
-        <span>Mostrar ecopontos no mapa</span>
+        <span>Ecopontos</span>
       `;
       ecoRow.addEventListener('click', (e) => e.stopPropagation());
       ecoRow.querySelector('input').addEventListener('change', (e) => {
@@ -2065,7 +2090,7 @@ function renderServiceCards(){
       escRow.id = 'escolas-checkbox-row';
       escRow.innerHTML = `
         <input type="checkbox" id="escolas-checkbox" ${state.showEscolas ? 'checked' : ''}>
-        <span>Mostrar escolas no mapa</span>
+        <span>Escolas</span>
       `;
       escRow.addEventListener('click', (e) => e.stopPropagation());
       escRow.querySelector('input').addEventListener('change', (e) => {
@@ -2073,6 +2098,40 @@ function renderServiceCards(){
         renderAll();
       });
       el.appendChild(escRow);
+    }
+
+    // Números dos Setores — aparece para todos os serviços com marcadores
+    if (SECTOR_MARKER_SERVICES.includes(svc.id) && state.service === svc.id){
+      const checkboxRow = document.createElement('label');
+      checkboxRow.className = 'checkbox-row sector-labels-inline';
+      checkboxRow.id = 'sector-labels-checkbox-row';
+      checkboxRow.innerHTML = `
+        <input type="checkbox" id="sector-labels-checkbox" ${state.showSectorLabels ? 'checked' : ''}>
+        <span>Números dos Setores</span>
+      `;
+      checkboxRow.addEventListener('click', (e) => e.stopPropagation());
+      checkboxRow.querySelector('input').addEventListener('change', (e) => {
+        state.showSectorLabels = e.target.checked;
+        renderAll();
+      });
+      el.appendChild(checkboxRow);
+    }
+
+    // Pontos de Apoio — só na Varrição
+    if (svc.id === 'varricao' && state.service === 'varricao'){
+      const apoioRow = document.createElement('label');
+      apoioRow.className = 'checkbox-row sector-labels-inline';
+      apoioRow.id = 'apoio-checkbox-row';
+      apoioRow.innerHTML = `
+        <input type="checkbox" id="apoio-checkbox" ${state.showApoio ? 'checked' : ''}>
+        <span>Pontos de Apoio</span>
+      `;
+      apoioRow.addEventListener('click', (e) => e.stopPropagation());
+      apoioRow.querySelector('input').addEventListener('change', (e) => {
+        state.showApoio = e.target.checked;
+        renderAll();
+      });
+      el.appendChild(apoioRow);
     }
   });
 }
@@ -2082,6 +2141,23 @@ function routesInScope(){
   if (state.subs.size === 0 || !state.service) return [];
   const svc = serviceById[state.service];
   return svc.data.filter(r => state.subs.has(r.sub));
+}
+
+// Como routesInScope, mas já aplica os filtros ativos de freq e dias.
+// Usada para popular as listas de Extra e Setor de forma reativa.
+function routesInScopeFiltered(){
+  const svc = serviceById[state.service];
+  return routesInScope().filter(r => {
+    if (svc.freqGroups && state.freq.size > 0){
+      const grupo = svc.freqGroups.find(g => g.valores.includes(r.freq));
+      if (!grupo || !state.freq.has(grupo.label)) return false;
+    }
+    if (svc.diasGroups && state.dias.size > 0){
+      const grupo = svc.diasGroups.find(g => g.valores.includes(r.dias));
+      if (!grupo || !state.dias.has(grupo.label)) return false;
+    }
+    return true;
+  });
 }
 
 function countFor(matchFn){
@@ -2196,6 +2272,16 @@ function renderChipGroup(containerId, groups, stateSet, fieldName){
     chip.addEventListener('click', () => {
       if (n === 0) return;
       if (stateSet.has(g.label)) stateSet.delete(g.label); else stateSet.add(g.label);
+      // Limpa setores e extras que não existem mais no escopo filtrado
+      if (state.service){
+        const validKeys = new Set(routesInScopeFiltered().map(sectorKey));
+        state.setores = new Set([...state.setores].filter(k => validKeys.has(k)));
+        const svc = serviceById[state.service];
+        if (svc.extraField){
+          const validExtras = new Set(routesInScopeFiltered().map(r => r[svc.extraField]).filter(Boolean));
+          state.extra = new Set([...state.extra].filter(v => validExtras.has(v)));
+        }
+      }
       renderAll();
     });
     el.appendChild(chip);
@@ -2212,7 +2298,7 @@ function renderSectorList(){
   const term = state.searchTerm.trim().toUpperCase();
   const multiSub = state.subs.size > 1;
   const svc = serviceById[state.service];
-  const scopeKeys = [...new Set(routesInScope().map(sectorKey))].sort(compareByFinalNumber);
+  const scopeKeys = [...new Set(routesInScopeFiltered().map(sectorKey))].sort(compareByFinalNumber);
   const filtered = scopeKeys.filter(key => {
     const code = key.split('|')[1];
     return !term || code.toUpperCase().includes(term);
@@ -2244,7 +2330,7 @@ function renderExtraList(){
 
   el.innerHTML = '';
   const term = (state.extraSearchTerm || '').trim().toUpperCase();
-  const valoresExtra = [...new Set(routesInScope().map(r => r[svc.extraField]))].filter(Boolean).sort((a, b) => a.localeCompare(b));
+  const valoresExtra = [...new Set(routesInScopeFiltered().map(r => r[svc.extraField]))].filter(Boolean).sort((a, b) => a.localeCompare(b));
   const filtered = valoresExtra.filter(v => !term || v.toUpperCase().includes(term));
 
   if (extraCountLabel){
@@ -2313,6 +2399,32 @@ function zoomToSetores(keys){
   if (layers.length === 0) return;
   const group = L.featureGroup(layers);
   map.flyToBounds(group.getBounds(), { padding: [60, 60], duration: 0.5, maxZoom: 16 });
+}
+
+// Navega para um setor a partir da Agenda do Dia:
+// 1) Ativa o serviço correto, 2) dá zoom, 3) abre o detalhe do setor
+function navegarParaSetor(setor, serviceId){
+  closeAgendaDia();
+
+  // Ativa o serviço se necessário
+  if (state.service !== serviceId){
+    state.service = serviceId;
+    state.freq.clear(); state.dias.clear();
+    state.extra.clear(); state.extraSearchTerm = '';
+  }
+
+  // Busca as features do setor para pegar a key correta (sub|setor)
+  const refs = featureRefs.filter(f => f.serviceId === serviceId && f.route.setor === setor);
+  if (refs.length === 0) return;
+
+  // Isola o setor — todos os outros ficam ocultos
+  state.setores = new Set([refs[0].key]);
+  renderAll();
+
+  const group = L.featureGroup(refs.map(f => f.layer));
+  map.flyToBounds(group.getBounds(), { padding: [80, 80], duration: 0.6, maxZoom: 16 });
+
+  setTimeout(() => openSectorDetail(refs[0].route, serviceId), 650);
 }
 
 // ---------- Aplicar filtros (mostra/oculta camadas) ----------
@@ -2677,7 +2789,40 @@ function encontrarTrechoMaisProximoVisivel(lat, lon){
     clearBtn.classList.add('show');
   }
 
+  // Regex para código de setor (ex: IP10101VJ0006, AD10700MT0014)
+  const SETOR_REGEX = /^[A-Z]{2}\d{5}[A-Z]{2}\d{4}$/i;
+
+  function buscarSetor(codigo){
+    const cod = codigo.trim().toUpperCase();
+    for (const svc of SERVICES){
+      const route = svc.data.find(r => r.setor === cod);
+      if (!route) continue;
+      resultsEl.classList.remove('show');
+      clearMarker();
+      if (!state.subs.has(route.sub)){
+        state.subs.add(route.sub);
+        if (typeof agendaBtn !== 'undefined') agendaBtn.classList.add('show');
+      }
+      state.service = svc.id;
+      state.freq.clear(); state.dias.clear();
+      state.extra.clear(); state.extraSearchTerm = '';
+      const refs = featureRefs.filter(f => f.serviceId === svc.id && f.route.setor === cod);
+      state.setores = refs.length > 0 ? new Set([refs[0].key]) : new Set();
+      renderAll();
+      if (refs.length > 0){
+        const group = L.featureGroup(refs.map(f => f.layer));
+        map.flyToBounds(group.getBounds(), { padding: [80, 80], duration: 0.7, maxZoom: 16 });
+        setTimeout(() => openSectorDetail(refs[0].route, svc.id), 750);
+      }
+      return true;
+    }
+    return false;
+  }
+
   async function doSearch(query){
+    // Tenta primeiro como código de setor
+    if (SETOR_REGEX.test(query.trim()) && buscarSetor(query)) return;
+
     const reqId = ++activeRequest;
     spinner.classList.add('show');
     try {
@@ -2719,6 +2864,53 @@ function encontrarTrechoMaisProximoVisivel(lat, lon){
     if (!document.getElementById('address-search').contains(e.target)){
       resultsEl.classList.remove('show');
     }
+  });
+})();
+
+// ---------- Geolocalização: minha posição ----------
+(function(){
+  const btn = document.getElementById('geolocate-btn');
+  if (!btn || !navigator.geolocation){ if(btn) btn.style.display='none'; return; }
+
+  let geoMarker = null;
+  let watching = false;
+  let watchId = null;
+
+  function criarGeoMarker(lat, lng){
+    if (geoMarker) map.removeLayer(geoMarker);
+    geoMarker = L.circleMarker([lat, lng], {
+      radius: 9, color: '#fff', weight: 2.5,
+      fillColor: '#3dd6c4', fillOpacity: 1
+    }).addTo(map);
+    geoMarker.bindTooltip('Minha localização', {
+      direction:'top', offset:[0,-10], className:'sector-tooltip'
+    });
+  }
+
+  btn.addEventListener('click', () => {
+    if (watching){
+      navigator.geolocation.clearWatch(watchId);
+      watching = false; watchId = null;
+      if (geoMarker){ map.removeLayer(geoMarker); geoMarker = null; }
+      btn.classList.remove('active', 'loading');
+      return;
+    }
+    btn.classList.add('loading');
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      criarGeoMarker(lat, lng);
+      map.flyTo([lat, lng], 16, { duration: 0.8 });
+      btn.classList.remove('loading');
+      btn.classList.add('active');
+      watching = true;
+      watchId = navigator.geolocation.watchPosition(
+        p => criarGeoMarker(p.coords.latitude, p.coords.longitude),
+        null, { enableHighAccuracy: true }
+      );
+    }, () => {
+      btn.classList.remove('loading');
+      alert('Não foi possível obter sua localização. Verifique as permissões do navegador.');
+    }, { enableHighAccuracy: true, timeout: 10000 });
   });
 })();
 </script>
