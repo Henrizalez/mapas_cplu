@@ -574,31 +574,6 @@
     flex-shrink:0;
   }
   .sdm-close:hover{ color: var(--ink); background: var(--panel-2); }
-
-
-  /* Botão flutuante: Minha localização */
-  #geolocate-btn{
-    position:absolute;
-    bottom:90px;
-    right:16px;
-    z-index:1050;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:38px; height:38px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    cursor:pointer;
-    color: var(--ink-dim);
-    transition: all .15s ease;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
-  }
-  #geolocate-btn:hover{ border-color: var(--accent-dim); color: var(--ink); }
-  #geolocate-btn.active{ background: rgba(61,214,196,0.14); border-color: var(--accent); color: var(--accent); }
-  #geolocate-btn.loading{ animation: geo-spin 1s linear infinite; }
-  #geolocate-btn svg{ width:16px; height:16px; }
-  @keyframes geo-spin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
   .sdm-body{
     padding: 16px 20px 20px;
     overflow-y: auto;
@@ -1065,7 +1040,7 @@
     <div id="address-search">
       <div class="addr-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="addr-input" placeholder="Endereço ou código do setor...">
+        <input type="text" id="addr-input" placeholder="Buscar endereço...">
         <div id="addr-spinner" class="addr-spinner"></div>
         <span id="addr-clear" title="Limpar">&times;</span>
       </div>
@@ -1080,9 +1055,6 @@
     <div id="agenda-btn" title="Agenda do dia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/></svg>
       <span>Agenda do dia</span>
-    </div>
-    <div id="geolocate-btn" title="Minha localização">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
     </div>
     <div id="legend">
       <div class="legend-head" id="legend-toggle">Legenda de setores <span id="legend-arrow">&#9650;</span></div>
@@ -1581,7 +1553,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { closeSectorDetail(); closeAgendaDia(); }
 });
 
-
 // ---------- Popup: Agenda do Dia ----------
 // Mostra os setores que têm execução programada HOJE (data exata),
 // apenas para os serviços com hasDates: true. Abre automaticamente ao
@@ -1905,38 +1876,43 @@ const ESCOLA_COLORS = {
 };
 const escolaMarkers = []; // { marker, sub }
 
-ESCOLAS.forEach(esc => {
+// Privadas adicionadas primeiro (ficam abaixo), públicas depois (ficam por cima)
+[...ESCOLAS].sort((a, b) => {
+  if (a.tipo === b.tipo) return 0;
+  return a.tipo === 'privada' ? -1 : 1;
+}).forEach(esc => {
   const cores = ESCOLA_COLORS[esc.tipo] || ESCOLA_COLORS.publica;
   const marker = L.circleMarker([esc.lat, esc.lon], {
     radius: 5,
     color: cores.color,
     weight: 1.2,
     fillColor: cores.fill,
-    fillOpacity: 0.9,
-    opacity: 0
+    fillOpacity: 0.9
   });
   marker._isVisible = false;
+  marker._escolaData = esc;
   const tipoLabel = esc.tipo === 'privada' ? 'Escola Particular' : 'Escola Pública';
-  const escTooltipHtml = `<div class="tt-row"><span class="tt-label">${tipoLabel}:</span> ${escapeHtml(esc.nome)}</div>` +
-                          (esc.endereco ? `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(esc.endereco)}</div>` : '');
-  marker.bindTooltip(escTooltipHtml, {
-    sticky: true,
-    direction: 'top',
-    offset: [0, -6],
-    className: 'sector-tooltip'
-  });
-  marker.on('tooltipopen', () => { if (!marker._isVisible) marker.closeTooltip(); });
-  marker.on('mouseover', () => { if (!marker._isVisible) return; marker.setStyle({ radius: 7 }); });
-  marker.on('mouseout',  () => { if (!marker._isVisible) return; marker.setStyle({ radius: 5 }); });
-  marker.addTo(map);
+  marker.bindTooltip(
+    `<div class="tt-row"><span class="tt-label">${tipoLabel}:</span> ${escapeHtml(esc.nome)}</div>` +
+    (esc.endereco ? `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(esc.endereco)}</div>` : ''),
+    { sticky: true, direction: 'top', offset: [0, -6], className: 'sector-tooltip' }
+  );
+  marker.on('mouseover', () => { marker.setStyle({ radius: 7 }); });
+  marker.on('mouseout',  () => { marker.setStyle({ radius: 5 }); });
+  // Não adiciona ao mapa ainda — só quando visível
   escolaMarkers.push({ marker, sub: esc.sub });
 });
 
 function updateEscolasVisibility(){
   escolaMarkers.forEach(({ marker, sub }) => {
     const shouldShow = state.service === 'varricao' && state.showEscolas && state.subs.has(sub);
-    marker._isVisible = shouldShow;
-    marker.setStyle({ opacity: shouldShow ? 1 : 0, fillOpacity: shouldShow ? 0.9 : 0 });
+    if (shouldShow && !marker._isVisible){
+      marker.addTo(map);
+      marker._isVisible = true;
+    } else if (!shouldShow && marker._isVisible){
+      marker.removeFrom(map);
+      marker._isVisible = false;
+    }
   });
 }
 
@@ -2789,40 +2765,7 @@ function encontrarTrechoMaisProximoVisivel(lat, lon){
     clearBtn.classList.add('show');
   }
 
-  // Regex para código de setor (ex: IP10101VJ0006, AD10700MT0014)
-  const SETOR_REGEX = /^[A-Z]{2}\d{5}[A-Z]{2}\d{4}$/i;
-
-  function buscarSetor(codigo){
-    const cod = codigo.trim().toUpperCase();
-    for (const svc of SERVICES){
-      const route = svc.data.find(r => r.setor === cod);
-      if (!route) continue;
-      resultsEl.classList.remove('show');
-      clearMarker();
-      if (!state.subs.has(route.sub)){
-        state.subs.add(route.sub);
-        if (typeof agendaBtn !== 'undefined') agendaBtn.classList.add('show');
-      }
-      state.service = svc.id;
-      state.freq.clear(); state.dias.clear();
-      state.extra.clear(); state.extraSearchTerm = '';
-      const refs = featureRefs.filter(f => f.serviceId === svc.id && f.route.setor === cod);
-      state.setores = refs.length > 0 ? new Set([refs[0].key]) : new Set();
-      renderAll();
-      if (refs.length > 0){
-        const group = L.featureGroup(refs.map(f => f.layer));
-        map.flyToBounds(group.getBounds(), { padding: [80, 80], duration: 0.7, maxZoom: 16 });
-        setTimeout(() => openSectorDetail(refs[0].route, svc.id), 750);
-      }
-      return true;
-    }
-    return false;
-  }
-
   async function doSearch(query){
-    // Tenta primeiro como código de setor
-    if (SETOR_REGEX.test(query.trim()) && buscarSetor(query)) return;
-
     const reqId = ++activeRequest;
     spinner.classList.add('show');
     try {
@@ -2864,53 +2807,6 @@ function encontrarTrechoMaisProximoVisivel(lat, lon){
     if (!document.getElementById('address-search').contains(e.target)){
       resultsEl.classList.remove('show');
     }
-  });
-})();
-
-// ---------- Geolocalização: minha posição ----------
-(function(){
-  const btn = document.getElementById('geolocate-btn');
-  if (!btn || !navigator.geolocation){ if(btn) btn.style.display='none'; return; }
-
-  let geoMarker = null;
-  let watching = false;
-  let watchId = null;
-
-  function criarGeoMarker(lat, lng){
-    if (geoMarker) map.removeLayer(geoMarker);
-    geoMarker = L.circleMarker([lat, lng], {
-      radius: 9, color: '#fff', weight: 2.5,
-      fillColor: '#3dd6c4', fillOpacity: 1
-    }).addTo(map);
-    geoMarker.bindTooltip('Minha localização', {
-      direction:'top', offset:[0,-10], className:'sector-tooltip'
-    });
-  }
-
-  btn.addEventListener('click', () => {
-    if (watching){
-      navigator.geolocation.clearWatch(watchId);
-      watching = false; watchId = null;
-      if (geoMarker){ map.removeLayer(geoMarker); geoMarker = null; }
-      btn.classList.remove('active', 'loading');
-      return;
-    }
-    btn.classList.add('loading');
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      criarGeoMarker(lat, lng);
-      map.flyTo([lat, lng], 16, { duration: 0.8 });
-      btn.classList.remove('loading');
-      btn.classList.add('active');
-      watching = true;
-      watchId = navigator.geolocation.watchPosition(
-        p => criarGeoMarker(p.coords.latitude, p.coords.longitude),
-        null, { enableHighAccuracy: true }
-      );
-    }, () => {
-      btn.classList.remove('loading');
-      alert('Não foi possível obter sua localização. Verifique as permissões do navegador.');
-    }, { enableHighAccuracy: true, timeout: 10000 });
   });
 })();
 </script>
