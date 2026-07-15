@@ -1256,7 +1256,8 @@ const SERVICES = [
     data: FEIRAS,
     freqGroups: null,
     diasGroups: DIAS_GROUPS_FEIRAS,
-    extraField: 'nome',
+    extraField: 'setor',
+    extraDisplayField: 'nome',
     extraLabel: 'Feira'
   },
   {
@@ -1288,7 +1289,8 @@ const SERVICES = [
     data: LEEP,
     freqGroups: FREQ_GROUPS_LEEP,
     diasGroups: DIAS_GROUPS_LEEP,
-    extraField: 'nome',
+    extraField: 'setor',
+    extraDisplayField: 'nome',
     extraLabel: 'Área'
   },
   {
@@ -1298,7 +1300,8 @@ const SERVICES = [
     data: PRACAS,
     freqGroups: FREQ_GROUPS_PRACAS,
     diasGroups: DIAS_GROUPS_PRACAS,
-    extraField: 'nome',
+    extraField: 'setor',
+    extraDisplayField: 'nome',
     extraLabel: 'Praça'
   },
   {
@@ -1308,7 +1311,8 @@ const SERVICES = [
     data: NUCLEOS_HABITACIONAIS,
     freqGroups: FREQ_GROUPS_NH,
     diasGroups: null,
-    extraField: 'nome',
+    extraField: 'setor',
+    extraDisplayField: 'nome',
     extraLabel: 'Núcleo',
     hasDates: true
   },
@@ -1498,7 +1502,8 @@ function openSectorDetail(route, serviceId, mostrarVia){
   }
   let extraRow = '';
   if (svc.extraField && route[svc.extraField]){
-    extraRow = `<div class="ip-row"><span>${escapeHtml(svc.extraLabel)}</span><b>${escapeHtml(route[svc.extraField])}</b></div>`;
+    const displayVal = svc.extraDisplayField ? (route[svc.extraDisplayField] || route[svc.extraField]) : route[svc.extraField];
+    extraRow = `<div class="ip-row"><span>${escapeHtml(svc.extraLabel)}</span><b>${escapeHtml(displayVal)}</b></div>`;
   }
   let freqRow = '';
   if (route.freq){
@@ -1741,8 +1746,8 @@ function buildPolygonLayer(route, serviceId){
     if (!pg._isVisible) return;
     if (svc.hasDates){
       openSectorDetail(route, serviceId);
-    } else if (route.nome){
-      toggleExtraSelection(route.nome);
+    } else if (svc.extraField && route[svc.extraField]){
+      toggleExtraSelection(route[svc.extraField]);
     }
     // Zoom automático para o polígono clicado
     map.flyToBounds(pg.getBounds(), { padding: [80, 80], duration: 0.5, maxZoom: 16 });
@@ -2306,19 +2311,30 @@ function renderExtraList(){
 
   el.innerHTML = '';
   const term = (state.extraSearchTerm || '').trim().toUpperCase();
-  const valoresExtra = [...new Set(routesInScopeFiltered().map(r => r[svc.extraField]))].filter(Boolean).sort((a, b) => a.localeCompare(b));
-  const filtered = valoresExtra.filter(v => !term || v.toUpperCase().includes(term));
+
+  // Monta lista de { valor (chave de filtro), label (texto exibido) }
+  const seen = new Set();
+  const itens = [];
+  routesInScopeFiltered().forEach(r => {
+    const valor = r[svc.extraField];
+    if (!valor || seen.has(valor)) return;
+    seen.add(valor);
+    const label = svc.extraDisplayField ? (r[svc.extraDisplayField] || valor) : valor;
+    itens.push({ valor, label });
+  });
+  itens.sort((a, b) => a.label.localeCompare(b.label));
+  const filtered = itens.filter(it => !term || it.label.toUpperCase().includes(term) || it.valor.toUpperCase().includes(term));
 
   if (extraCountLabel){
     extraCountLabel.textContent = state.extra.size > 0 ? `(${state.extra.size} selecionada${state.extra.size > 1 ? 's' : ''})` : '';
   }
 
-  filtered.forEach(valor => {
+  filtered.forEach(({ valor, label }) => {
     const row = document.createElement('div');
     const isActive = state.extra.has(valor);
     row.className = 'sector-row' + (isActive ? ' active' : '');
     const corServico = SERVICE_FIXED_COLOR[svc.id] || '#3dd6c4';
-    row.innerHTML = `<span class="swatch" style="background:${corServico}"></span><span class="code">${escapeHtml(valor)}</span>`;
+    row.innerHTML = `<span class="swatch" style="background:${corServico}"></span><span class="code">${escapeHtml(label)}</span>`;
     row.addEventListener('click', () => toggleExtraSelection(valor));
     el.appendChild(row);
   });
