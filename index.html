@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mapas Operacionais - CPLU</title>
+<meta name="description" content="Dashboard de operações de limpeza urbana — CPLU Cidade Ademar, Ipiranga e Jabaquara">
+<meta name="theme-color" content="#11161f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CPLU Mapas">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjgwIiBmaWxsPSIjMTExNjFmIi8+CiAgPHRleHQgeD0iMjU2IiB5PSIyMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjEyMCIgZmlsbD0iIzNkZDZjNCI+Q1A8L3RleHQ+CiAgPHRleHQgeD0iMjU2IiB5PSIzMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCxzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iNzAwIiBmb250LXNpemU9IjEyMCIgZmlsbD0iIzNkZDZjNCI+TFU8L3RleHQ+CiAgPGNpcmNsZSBjeD0iMjU2IiBjeT0iMzkwIiByPSIyNCIgZmlsbD0iIzNkZDZjNCIvPgogIDxwYXRoIGQ9Ik0yNTYgMzkwIEwyNDAgMzUwIEwyNzIgMzUwIFoiIGZpbGw9IiMzZGQ2YzQiLz4KPC9zdmc+">
+<link rel="manifest" id="pwa-manifest">
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -399,6 +407,20 @@
   .sector-tooltip .tt-row{ white-space: nowrap; }
   .sector-tooltip .tt-label{ color: var(--accent); font-weight: 600; }
   .sector-tooltip::before{ display:none !important; }
+
+  /* Badge "⚡ Hoje" no tooltip */
+  .tt-hoje{
+    display:inline-block;
+    background: #f59e0b;
+    color: #1a1200;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    margin-left: 4px;
+    vertical-align: middle;
+    letter-spacing: .02em;
+  }
   .addr-tooltip{
     max-width: 260px !important;
     white-space: normal !important;
@@ -1474,7 +1496,9 @@ function updateDivisaStyles(){
 const infoPanel = document.getElementById('info-panel');
 
 function showInfo(route, serviceId){
-  infoPanel.innerHTML = `<div class="ip-rua">${escapeHtml(route.rua || route.nome || '(sem nome)')}</div>`;
+  const hoje = routeExecutaHoje(route, serviceId);
+  const badge = hoje ? ' <span class="tt-hoje">⚡ Hoje</span>' : '';
+  infoPanel.innerHTML = `<div class="ip-rua">${escapeHtml(route.rua || route.nome || '(sem nome)')}${badge}</div>`;
   infoPanel.classList.add('show');
   infoPanel.classList.remove('has-dates');
 }
@@ -1703,6 +1727,59 @@ agendaBtn.addEventListener('click', () => {
 });
 
 // ---------- Camadas de geometria (linhas de Varrição + polígonos de Praças) ----------
+// ── Lógica global de "hoje" ──────────────────────────────────────────────────
+// Reutilizada pelo indicador visual no mapa e pela Agenda do Dia.
+const _hoje = new Date(); _hoje.setHours(0,0,0,0);
+const HOJE_STR = _hoje.toLocaleDateString('pt-BR');   // dd/mm/yyyy
+const HOJE_WD  = _hoje.getDay();                      // 0=Dom … 6=Sáb
+
+const DIAS_POR_WEEKDAY_GLOBAL = {
+  0: ['Semanal Domingo'],
+  1: ['Semanal Segunda', 'Bissemanal de Terça/Sexta', 'Alternada de Segunda/Quarta/Sexta',
+      '1x/dia', '4x/dia', 'Bissemanal de Segunda/Quinta'],
+  2: ['Semanal Terça', 'Bissemanal de Terça/Sexta', 'Alternada de Terça/Quinta/Sábado',
+      '1x/dia', '4x/dia', 'Bissemanal de Terça/Sexta'],
+  3: ['Semanal Quarta', 'Alternada de Segunda/Quarta/Sexta',
+      '1x/dia', '4x/dia', 'Bissemanal de Quarta/Sábado'],
+  4: ['Semanal Quinta', 'Alternada de Terça/Quinta/Sábado',
+      '1x/dia', '4x/dia', 'Bissemanal de Segunda/Quinta'],
+  5: ['Semanal Sexta', 'Bissemanal de Terça/Sexta', 'Alternada de Segunda/Quarta/Sexta',
+      '1x/dia', '4x/dia', 'Bissemanal de Terça/Sexta'],
+  6: ['Semanal Sábado', 'Alternada de Terça/Quinta/Sábado', 'Bissemanal de Quarta/Sábado',
+      '1x/dia', '4x/dia']
+};
+const DIAS_HOJE_SET = new Set(DIAS_POR_WEEKDAY_GLOBAL[HOJE_WD] || []);
+
+// Variantes de dia da semana presentes nos dados de varrição
+const DIAS_VARRICAO_POR_WD = {
+  0: [],
+  1: ['Alternada de Segunda/Quarta/Sexta','Bissemanal de Segunda/Quinta','1x/dia','4x/dia'],
+  2: ['Alternada de Terça/Quinta/Sábado','Bissemanal de Terça/Sexta','1x/dia','4x/dia'],
+  3: ['Alternada de Segunda/Quarta/Sexta','Bissemanal de Quarta/Sábado','1x/dia','4x/dia'],
+  4: ['Alternada de Terça/Quinta/Sábado','Bissemanal de Segunda/Quinta','1x/dia','4x/dia'],
+  5: ['Alternada de Segunda/Quarta/Sexta','Bissemanal de Terça/Sexta','1x/dia','4x/dia'],
+  6: ['Alternada de Terça/Quinta/Sábado','Bissemanal de Quarta/Sábado','1x/dia','4x/dia']
+};
+const DIAS_VAR_HOJE = new Set(DIAS_VARRICAO_POR_WD[HOJE_WD] || []);
+
+// Determina se uma route tem execução hoje
+function routeExecutaHoje(route, serviceId){
+  const svc = serviceById[serviceId];
+  if (!svc) return false;
+  // Serviços com datas explícitas
+  if (svc.hasDates && Array.isArray(route.datas)){
+    return route.datas.some(d => d === HOJE_STR);
+  }
+  // Serviços por dia da semana (polígonos)
+  if (route.dias){
+    if (serviceId === 'varricao') return DIAS_VAR_HOJE.has(route.dias);
+    return DIAS_HOJE_SET.has(route.dias);
+  }
+  // Praças: execução diária
+  if (serviceId === 'pracas') return true;
+  return false;
+}
+
 const featureRefs = []; // { layer, route, key, serviceId }
 
 function buildLineLayer(route, serviceId){
@@ -1731,7 +1808,9 @@ function buildPolygonLayer(route, serviceId){
   });
   pg._isVisible = false;
   const extraLabel = svc.extraLabel || 'Nome';
-  const tooltipHtml = `<div class="tt-row"><span class="tt-label">Setor:</span> ${escapeHtml(route.setor)}</div>` +
+  const hojePoligono = routeExecutaHoje(route, serviceId);
+  const badgePg = hojePoligono ? ' <span class="tt-hoje">⚡ Hoje</span>' : '';
+  const tooltipHtml = `<div class="tt-row"><span class="tt-label">Setor:</span> ${escapeHtml(route.setor)}${badgePg}</div>` +
                        `<div class="tt-row"><span class="tt-label">${escapeHtml(extraLabel)}:</span> ${escapeHtml(route.nome || '(sem nome)')}</div>`;
   pg.bindTooltip(tooltipHtml, {
     sticky: true,
@@ -2445,17 +2524,28 @@ function applyFilters(){
   featureRefs.forEach(({ layer, route, key, serviceId }) => {
     const visible = isFeatureVisible(route, key, serviceId);
     layer._isVisible = visible;
-    if (serviceById[serviceId].geometryType === 'polygon'){
-      layer.setStyle({ opacity: visible ? 0.9 : 0, fillOpacity: visible ? 0.35 : 0, weight: 2 });
+    const executaHoje = visible && routeExecutaHoje(route, serviceId);
+    const svc = serviceById[serviceId];
+
+    if (svc.geometryType === 'polygon'){
+      layer.setStyle({
+        opacity: visible ? 0.9 : 0,
+        fillOpacity: visible ? 0.35 : 0,
+        weight: executaHoje ? 3 : 2,
+        dashArray: executaHoje ? null : null,
+        color: executaHoje ? '#f59e0b' : (layer.options._baseColor || layer.options.color)
+      });
     } else {
-      layer.setStyle({ opacity: visible ? 0.85 : 0, weight: 3 });
+      layer.setStyle({
+        opacity: visible ? 0.85 : 0,
+        weight: executaHoje ? 5 : 3,
+        color: executaHoje ? '#f59e0b' : (layer.options._baseColor || layer.options.color)
+      });
     }
     if (visible) visibleSetorKeys.add(key);
   });
 
-  // Rótulos numéricos de setor: visíveis somente quando o serviço ativo
-  // tem essa funcionalidade habilitada, o toggle está ligado, e o setor
-  // está no conjunto filtrado atual
+  // Rótulos numéricos de setor
   Object.keys(sectorLabelMarkers).forEach(markerKey => {
     const marker = sectorLabelMarkers[markerKey];
     const setorKeyOnly = markerKey.slice(marker._serviceId.length + 1);
@@ -2824,6 +2914,54 @@ function encontrarTrechoMaisProximoVisivel(lat, lon){
       resultsEl.classList.remove('show');
     }
   });
+})();
+
+// ---------- PWA: Manifest + Service Worker ----------
+(function(){
+  const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#11161f"/><text x="256" y="210" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="130" fill="#3dd6c4">CP</text><text x="256" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="130" fill="#3dd6c4">LU</text></svg>`;
+  const iconB64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(ICON_SVG)));
+
+  const manifest = {
+    name: 'Mapas Operacionais CPLU',
+    short_name: 'CPLU Mapas',
+    description: 'Dashboard de operações de limpeza urbana — CPLU',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#11161f',
+    theme_color: '#11161f',
+    orientation: 'any',
+    icons: [
+      { src: iconB64, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const link = document.getElementById('pwa-manifest');
+  if (link) link.href = URL.createObjectURL(blob);
+
+  // Service Worker para cache offline (estratégia stale-while-revalidate)
+  if ('serviceWorker' in navigator){
+    const swCode = `
+const CACHE='cplu-v1';
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(
+  caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+));
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  e.respondWith(caches.open(CACHE).then(c=>
+    c.match(e.request).then(cached=>{
+      const fresh=fetch(e.request).then(r=>{
+        if(r&&r.status===200)c.put(e.request,r.clone());
+        return r;
+      }).catch(()=>cached);
+      return cached||fresh;
+    })
+  ));
+});`;
+    const swBlob = new Blob([swCode],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob),{scope:'./'}).catch(()=>{});
+  }
 })();
 </script>
 </body>
