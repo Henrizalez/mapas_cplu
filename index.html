@@ -2054,7 +2054,7 @@ function updateEscolasVisibility(){
   });
 }
 
-// ---------- Pontos de Apoio (pontos fixos, visíveis apenas com Varrição ativa) ----------
+// ---------- Pontos de Apoio (pontos fixos, visíveis em qualquer serviço ativo) ----------
 const apoioMarkers = []; // { marker, sub }
 
 PONTOS_APOIO.forEach(p => {
@@ -2084,7 +2084,7 @@ PONTOS_APOIO.forEach(p => {
 
 function updateApoioVisibility(){
   apoioMarkers.forEach(({ marker, sub }) => {
-    const shouldShow = state.service === 'varricao' && state.showApoio && state.subs.has(sub);
+    const shouldShow = state.service && state.showApoio && state.subs.has(sub);
     marker._isVisible = shouldShow;
     marker.setStyle({ opacity: shouldShow ? 1 : 0, fillOpacity: shouldShow ? 0.9 : 0 });
   });
@@ -2235,8 +2235,8 @@ function renderServiceCards(){
       el.appendChild(checkboxRow);
     }
 
-    // Pontos de Apoio — só na Varrição
-    if (svc.id === 'varricao' && state.service === 'varricao'){
+    // Pontos de Apoio — disponível em todos os serviços
+    if (state.service === svc.id){
       const apoioRow = document.createElement('label');
       apoioRow.className = 'checkbox-row sector-labels-inline';
       apoioRow.id = 'apoio-checkbox-row';
