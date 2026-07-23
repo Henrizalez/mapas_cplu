@@ -18,17 +18,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0a0e14;
-    --panel: #11161f;
-    --panel-2: #161c28;
-    --line: #232b3a;
-    --ink: #e6ebf2;
-    --ink-dim: #8893a3;
-    --ink-faint: #5a6478;
-    --accent: #3dd6c4;
-    --accent-dim: #1f7a70;
-    --warn: #ff8a5b;
-    --radius: 10px;
+    --bg: #080b10;
+    --panel: rgba(14,19,28,0.92);
+    --panel-solid: #0e131c;
+    --panel-2: rgba(20,27,40,0.85);
+    --panel-2-solid: #141b28;
+    --line: rgba(255,255,255,0.07);
+    --line-strong: rgba(255,255,255,0.12);
+    --ink: #eaf0f8;
+    --ink-dim: #8a95a8;
+    --ink-faint: #505c70;
+    --accent: #34d9c4;
+    --accent-glow: rgba(52,217,196,0.18);
+    --accent-dim: rgba(52,217,196,0.12);
+    --accent-border: rgba(52,217,196,0.35);
+    --warn: #f59e42;
+    --danger: #ef4444;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.5);
+    --blur: blur(20px);
     --mono: 'JetBrains Mono', monospace;
     --sans: 'Inter', sans-serif;
   }
@@ -39,74 +50,86 @@
 
   /* ===== SIDEBAR ===== */
   #sidebar{
-    width: 300px;
-    min-width: 300px;
+    width: 320px;
+    min-width: 320px;
     height:100%;
     background: var(--panel);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
     border-right: 1px solid var(--line);
     display:flex;
     flex-direction:column;
     z-index: 10;
+    transition: width .25s cubic-bezier(.4,0,.2,1), min-width .25s cubic-bezier(.4,0,.2,1);
   }
   #sidebar.collapsed{ width:0; min-width:0; overflow:hidden; border-right:none; }
 
   .header{
-    padding: 18px 20px 14px;
+    padding: 20px 22px 16px;
     border-bottom: 1px solid var(--line);
     flex-shrink:0;
   }
   .header .logo{
     display: block;
-    height: 56px;
+    height: 52px;
     width: auto;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    filter: drop-shadow(0 2px 8px rgba(52,217,196,0.15));
   }
   .header .eyebrow{
     font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
+    font-size: 10px;
+    letter-spacing: 0.14em;
     color: var(--accent);
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     display:flex;
     align-items:center;
-    gap:7px;
+    gap:8px;
   }
   .header .eyebrow .dot{
-    width:6px; height:6px; border-radius:50%; background:var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
+    width:7px; height:7px; border-radius:50%; background:var(--accent);
+    box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(52,217,196,0.3);
+    animation: pulse 2.5s ease-in-out infinite;
   }
-  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.35; } }
+  @keyframes pulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.3; transform:scale(0.85); } }
   .header h1{
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height:1.25;
+    letter-spacing: -0.02em;
+    line-height:1.3;
+    background: linear-gradient(135deg, var(--ink) 0%, var(--ink-dim) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .header .sub{
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--ink-dim);
-    margin-top: 4px;
+    margin-top: 5px;
+    letter-spacing: 0.01em;
   }
 
   .scroll-area{
     flex:1;
     overflow-y:auto;
-    padding: 16px 20px 20px;
+    padding: 18px 22px 22px;
   }
-  .scroll-area::-webkit-scrollbar{ width:8px; }
-  .scroll-area::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+  .scroll-area::-webkit-scrollbar{ width:6px; }
+  .scroll-area::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.1); border-radius:3px; }
+  .scroll-area::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,0.18); }
   .scroll-area::-webkit-scrollbar-track{ background:transparent; }
 
-  .block{ margin-bottom: 22px; }
+  .block{ margin-bottom: 24px; }
   .block-label{
     font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.08em;
+    font-size: 10px;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ink-faint);
     margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -119,49 +142,69 @@
     cursor:pointer;
     font-size: 11px;
     opacity: 0.85;
-    transition: opacity .15s;
+    transition: all .2s;
   }
   .block-label .clear-btn:hover{ opacity:1; text-decoration:underline; }
 
   /* Tabs de Subprefeitura */
   .sub-tabs{
     display:flex;
-    gap:6px;
-    margin-bottom: 4px;
+    gap:8px;
+    margin-bottom: 6px;
   }
   .sub-tab{
     flex:1;
     text-align:center;
-    padding: 10px 6px;
+    padding: 12px 8px;
     border-radius: var(--radius);
     border: 1px solid var(--line);
     background: var(--panel-2);
+    backdrop-filter: var(--blur);
     cursor:pointer;
-    transition: all .15s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
+    position:relative;
+    overflow:hidden;
   }
+  .sub-tab::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(135deg, transparent 0%, rgba(52,217,196,0.05) 100%);
+    opacity:0;
+    transition: opacity .2s;
+  }
+  .sub-tab:hover::before{ opacity:1; }
   .sub-tab .code{
     font-family: var(--mono);
     font-weight:700;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--ink-dim);
     display:block;
+    position:relative;
+    transition: color .2s;
   }
   .sub-tab .name{
-    font-size: 9.5px;
+    font-size: 9px;
     color: var(--ink-faint);
-    margin-top:2px;
+    margin-top:3px;
     display:block;
     white-space:nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position:relative;
+    transition: color .2s;
   }
-  .sub-tab:hover{ border-color: var(--accent-dim); }
+  .sub-tab:hover{ border-color: var(--accent-border); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
   .sub-tab.active{
-    background: rgba(61,214,196,0.1);
+    background: var(--accent-dim);
     border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(52,217,196,0.12);
   }
+  .sub-tab.active::before{ opacity:1; background: linear-gradient(135deg, rgba(52,217,196,0.08) 0%, transparent 100%); }
   .sub-tab.active .code{ color: var(--accent); }
   .sub-tab.active .name{ color: var(--ink); }
 
-  /* Cards de seleção de serviço (Varrição / Praças) */
+  /* Cards de seleção de serviço */
   .service-cards{
     display:flex;
     flex-direction:column;
@@ -172,32 +215,51 @@
     justify-content:space-between;
     align-items:center;
     gap:10px;
-    padding: 11px 13px;
+    padding: 12px 14px;
     border-radius: var(--radius);
     border: 1px solid var(--line);
     background: var(--panel-2);
     cursor:pointer;
-    transition: all .15s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
+    position:relative;
+    overflow:hidden;
   }
-  .service-card:hover{ border-color: var(--accent-dim); }
+  .service-card::after{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+    transform: scaleY(0);
+    transition: transform .2s cubic-bezier(.4,0,.2,1);
+  }
+  .service-card:hover{ border-color: var(--accent-border); transform: translateX(2px); }
   .service-card.active{
-    background: rgba(61,214,196,0.1);
-    border-color: var(--accent);
+    background: var(--accent-dim);
+    border-color: var(--accent-border);
+    box-shadow: 0 0 16px rgba(52,217,196,0.08);
   }
-  .service-card.disabled{ opacity:0.35; cursor:default; pointer-events:none; }
+  .service-card.active::after{ transform: scaleY(1); }
+  .service-card.disabled{ opacity:0.3; cursor:default; pointer-events:none; }
   .service-card .sc-name{
     font-size: 13px;
     font-weight: 600;
     color: var(--ink-dim);
+    transition: color .2s;
   }
   .service-card.active .sc-name{ color: var(--ink); }
   .service-card .sc-count{
     font-family: var(--mono);
-    font-size: 10.5px;
+    font-size: 10px;
     color: var(--ink-faint);
     flex-shrink:0;
+    background: rgba(255,255,255,0.04);
+    padding: 3px 8px;
+    border-radius: 20px;
+    transition: all .2s;
   }
-  .service-card.active .sc-count{ color: var(--accent); }
+  .service-card.active .sc-count{ color: var(--accent); background: rgba(52,217,196,0.1); }
 
   /* Estado vazio (nenhuma sub selecionada) */
   .empty-hint{
@@ -210,22 +272,22 @@
     line-height: 1.5;
   }
 
-  /* Checkbox de opção simples (ex: mostrar números dos setores) */
+  /* Checkbox de opção simples */
   .checkbox-row{
     display:flex;
     align-items:center;
-    gap:9px;
-    padding: 10px 12px;
+    gap:10px;
+    padding: 10px 14px;
     border-radius: var(--radius);
     border: 1px solid var(--line);
     background: var(--panel-2);
     cursor:pointer;
     font-size: 12.5px;
     color: var(--ink-dim);
-    transition: all .15s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
     user-select:none;
   }
-  .checkbox-row:hover{ border-color: var(--accent-dim); color: var(--ink); }
+  .checkbox-row:hover{ border-color: var(--accent-border); color: var(--ink); background: rgba(52,217,196,0.04); }
   .checkbox-row input[type="checkbox"]{
     width:16px; height:16px;
     accent-color: var(--accent);
@@ -233,10 +295,11 @@
     flex-shrink:0;
   }
   .checkbox-row.sector-labels-inline{
-    margin: -2px 0 4px 14px;
+    margin: 2px 0 6px 16px;
     padding: 8px 12px;
     background: transparent;
     border-style: dashed;
+    border-color: rgba(255,255,255,0.05);
     font-size: 11.5px;
   }
 
@@ -247,47 +310,50 @@
     align-items:center;
     justify-content:space-between;
     gap:10px;
-    padding: 9px 11px;
+    padding: 10px 13px;
     border-radius: var(--radius);
     border: 1px solid var(--line);
     background: var(--panel-2);
     cursor:pointer;
     font-size: 12.5px;
     color: var(--ink-dim);
-    transition: all .15s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
     user-select:none;
   }
-  .chip:hover{ border-color: var(--accent-dim); color: var(--ink); }
+  .chip:hover{ border-color: var(--accent-border); color: var(--ink); transform: translateX(2px); }
   .chip.active{
-    background: rgba(61,214,196,0.1);
-    border-color: var(--accent);
+    background: var(--accent-dim);
+    border-color: var(--accent-border);
     color: var(--ink);
+    box-shadow: 0 0 12px rgba(52,217,196,0.06);
   }
-  .chip.disabled{ opacity: 0.35; cursor: default; pointer-events: none; }
+  .chip.disabled{ opacity: 0.25; cursor: default; pointer-events: none; }
 
   /* Busca de setor */
   .search-box{
     position:relative;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .search-box input{
     width:100%;
     background: var(--panel-2);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 9px 11px 9px 32px;
+    padding: 11px 13px 11px 36px;
     color: var(--ink);
     font-size: 12.5px;
     font-family: var(--sans);
     outline:none;
-    transition: border-color .15s;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
   }
-  .search-box input:focus{ border-color: var(--accent); }
+  .search-box input:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52,217,196,0.1); }
   .search-box input::placeholder{ color: var(--ink-faint); }
   .search-box svg{
-    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
     width:14px; height:14px; color: var(--ink-faint); pointer-events:none;
+    transition: color .2s;
   }
+  .search-box input:focus ~ svg, .search-box:focus-within svg{ color: var(--accent); }
 
   /* Lista de setores */
   #sector-list{
@@ -311,7 +377,7 @@
     transition: background .12s;
   }
   .sector-row:hover{ background: var(--panel-2); }
-  .sector-row.active{ background: rgba(61,214,196,0.08); }
+  .sector-row.active{ background: rgba(52,217,196,0.08); }
   .sector-row .swatch{
     width:10px; height:10px; border-radius:50%; flex-shrink:0;
     box-shadow: 0 0 0 2px rgba(255,255,255,0.06);
@@ -332,43 +398,54 @@
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 6px;
   }
   .stat-card{
     background: var(--panel-2);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 10px 12px;
+    padding: 12px 14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .stat-card::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity:0.5;
   }
   .stat-card .val{
     font-family: var(--mono);
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--accent);
     line-height:1.1;
   }
   .stat-card .lbl{
-    font-size: 10.5px;
+    font-size: 10px;
     color: var(--ink-faint);
-    margin-top: 2px;
+    margin-top: 4px;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
   }
 
   .footer-note{
-    padding: 12px 20px;
+    padding: 14px 22px;
     border-top: 1px solid var(--line);
-    font-size: 10.5px;
+    font-size: 10px;
     color: var(--ink-faint);
     font-family: var(--mono);
     flex-shrink:0;
-    line-height: 1.6;
+    line-height: 1.7;
+    background: rgba(0,0,0,0.15);
   }
   .footer-note .credit{
     display: block;
     margin-top: 3px;
     color: var(--ink-faint);
-    opacity: 0.75;
+    opacity: 0.6;
   }
 
   /* ===== MAPA ===== */
@@ -455,16 +532,19 @@
   /* Toggle sidebar */
   #toggle-sidebar{
     position:absolute; top:16px; left:16px; z-index:1100;
-    width:36px; height:36px;
+    width:40px; height:40px;
     background: var(--panel);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
     border: 1px solid var(--line);
-    border-radius: 8px;
+    border-radius: var(--radius);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     color: var(--ink-dim);
-    transition: all .15s;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
+    box-shadow: var(--shadow-sm);
   }
-  #toggle-sidebar:hover{ color:var(--ink); border-color: var(--accent-dim); }
+  #toggle-sidebar:hover{ color:var(--accent); border-color: var(--accent-border); transform: scale(1.05); }
   #toggle-sidebar svg{ width:17px; height:17px; }
 
   /* Painel de info do trecho (hover) */
@@ -474,15 +554,18 @@
     left:16px;
     z-index:1100;
     background: var(--panel);
-    border: 1px solid var(--line);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line-strong);
     border-radius: var(--radius);
-    padding: 12px 14px;
+    padding: 14px 16px;
     min-width: 240px;
     max-width: 320px;
     pointer-events:none;
     opacity:0;
-    transform: translateY(6px);
-    transition: opacity .12s, transform .12s;
+    transform: translateY(8px);
+    transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
+    box-shadow: var(--shadow-md);
   }
   #info-panel.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
   #info-panel.shifted-up{ bottom: 64px; }
@@ -541,10 +624,12 @@
   /* Marcador de setor clicável: cursor de mão para indicar interatividade */
   .sector-label-icon{ cursor: pointer; }
 
-  /* Modal de detalhe do setor (aberto ao clicar no marcador numérico) */
+  /* Modal de detalhe do setor */
   #sector-detail-backdrop{
     position:fixed; inset:0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     z-index:2000;
     display:none;
   }
@@ -552,18 +637,20 @@
   #sector-detail-modal{
     position:fixed;
     top:50%; left:50%;
-    transform: translate(-50%, -50%) scale(0.96);
+    transform: translate(-50%, -50%) scale(0.92);
     width: min(480px, 90vw);
     max-height: 80vh;
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg), 0 0 80px rgba(52,217,196,0.05);
     z-index:2001;
     display:none;
     flex-direction: column;
     opacity: 0;
-    transition: opacity .15s ease, transform .15s ease;
+    transition: opacity .25s cubic-bezier(.4,0,.2,1), transform .25s cubic-bezier(.4,0,.2,1);
   }
   #sector-detail-modal.show{
     display:flex;
@@ -651,61 +738,41 @@
     .sdm-dates-grid{ grid-template-columns: repeat(3, 1fr); }
   }
 
-  /* Toggle de números dos setores (só aparece com Varrição ativa) */
-  #sector-labels-toggle{
+  /* Botões flutuantes — estilo compartilhado */
+  .map-float-btn{
     position:absolute;
-    bottom:24px;
     left:16px;
     z-index:1050;
     display:none;
     align-items:center;
-    gap:7px;
-    padding: 9px 14px;
+    gap:8px;
+    padding: 10px 16px;
     background: var(--panel);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
     border: 1px solid var(--line);
-    border-radius: 20px;
+    border-radius: 24px;
     cursor:pointer;
     font-size: 12px;
     font-weight: 500;
     color: var(--ink-dim);
-    transition: all .15s ease;
+    transition: all .2s cubic-bezier(.4,0,.2,1);
     user-select:none;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
+    box-shadow: var(--shadow-md);
   }
-  #sector-labels-toggle:hover{ border-color: var(--accent-dim); color: var(--ink); }
-  #sector-labels-toggle.active{
-    background: rgba(61,214,196,0.14);
+  .map-float-btn:hover{ border-color: var(--accent-border); color: var(--ink); transform: translateY(-1px); box-shadow: var(--shadow-md), 0 0 16px rgba(52,217,196,0.08); }
+  .map-float-btn.active{
+    background: rgba(52,217,196,0.12);
     border-color: var(--accent);
     color: var(--ink);
+    box-shadow: var(--shadow-md), 0 0 20px rgba(52,217,196,0.15);
   }
-  #sector-labels-toggle svg{ width:15px; height:15px; flex-shrink:0; }
-  #sector-labels-toggle.show{ display:flex; }
+  .map-float-btn svg{ width:15px; height:15px; flex-shrink:0; }
+  .map-float-btn.show{ display:flex; }
 
-  /* Botão flutuante: Agenda do dia */
-  #agenda-btn{
-    position:absolute;
-    bottom:62px;
-    left:16px;
-    z-index:1050;
-    display:none;
-    align-items:center;
-    gap:7px;
-    padding: 9px 14px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    cursor:pointer;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--ink-dim);
-    transition: all .15s ease;
-    user-select:none;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.35);
-  }
-  #agenda-btn:hover{ border-color: var(--accent-dim); color: var(--ink); }
-  #agenda-btn.active{ background: rgba(61,214,196,0.14); border-color: var(--accent); color: var(--ink); }
-  #agenda-btn svg{ width:15px; height:15px; flex-shrink:0; }
-  #agenda-btn.show{ display:flex; }
+  /* Posições dos botões flutuantes */
+  #sector-labels-toggle{ bottom:24px; }
+  #agenda-btn{ bottom:62px; }
 
   /* Botão: Execução de hoje */
   #hoje-btn{
@@ -1101,15 +1168,15 @@
     </div>
     <div id="map"></div>
     <div id="info-panel"></div>
-    <div id="sector-labels-toggle" title="Mostrar/ocultar números dos setores">
+    <div id="sector-labels-toggle" class="map-float-btn" title="Mostrar/ocultar números dos setores">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="sector-labels-toggle-text">Números dos setores</span>
     </div>
-    <div id="agenda-btn" title="Agenda do dia">
+    <div id="agenda-btn" class="map-float-btn" title="Agenda do dia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/></svg>
       <span>Agenda do dia</span>
     </div>
-    <div id="hoje-btn" title="Destacar setores com execução hoje">
+    <div id="hoje-btn" class="map-float-btn" title="Destacar setores com execução hoje">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       <span>Execução de hoje</span>
     </div>
@@ -3020,5 +3087,962 @@ self.addEventListener('fetch',e=>{
   }
 })();
 </script>
+
+<!-- CHATBOT CPLU OFFLINE v3 -->
+<style>
+#chat-fab {
+  position: fixed; bottom: 24px; right: 80px; width: 56px; height: 56px;
+  border-radius: 50%; background: linear-gradient(135deg, rgba(52,217,196,0.95), rgba(52,217,196,0.7));
+  border: none; cursor: pointer; z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(52,217,196,0.35);
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+#chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(52,217,196,0.5); }
+#chat-fab svg { width: 26px; height: 26px; fill: #0e131c; transition: transform 0.3s; }
+#chat-fab.open svg { transform: rotate(90deg); }
+#chat-panel {
+  position: fixed; bottom: 92px; right: 24px; width: 420px; max-height: 560px;
+  background: rgba(14,19,28,0.97); backdrop-filter: blur(24px);
+  border: 1px solid rgba(52,217,196,0.12); border-radius: 16px;
+  z-index: 10000; display: none; flex-direction: column;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.55); overflow: hidden;
+}
+#chat-panel.visible { display: flex; animation: chatSlideUp 0.3s ease; }
+@keyframes chatSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+#chat-header {
+  padding: 12px 16px; background: rgba(52,217,196,0.05);
+  border-bottom: 1px solid rgba(52,217,196,0.1);
+  display: flex; align-items: center; gap: 10px;
+}
+#chat-header .dot { width:8px; height:8px; border-radius:50%; background:rgba(52,217,196,0.9); }
+#chat-header .title { color:#e2e8f0; font-size:13.5px; font-weight:600; letter-spacing:0.3px; }
+#chat-header .badge { margin-left:auto; font-size:9.5px; color:rgba(52,217,196,0.6); background:rgba(52,217,196,0.08); padding:2px 8px; border-radius:8px; letter-spacing:0.5px; text-transform:uppercase; }
+#chat-clear {
+  width:28px; height:28px; border-radius:8px; background:transparent;
+  border:1px solid rgba(255,255,255,0.08); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s;
+}
+#chat-clear:hover { background:rgba(255,80,80,0.12); border-color:rgba(255,80,80,0.3); }
+#chat-clear svg { width:14px; height:14px; fill:rgba(255,255,255,0.4); transition:fill 0.2s; }
+#chat-clear:hover svg { fill:rgba(255,120,120,0.9); }
+#chat-messages {
+  flex:1; overflow-y:auto; padding:12px;
+  display:flex; flex-direction:column; gap:10px;
+  max-height:400px; min-height:200px;
+}
+#chat-messages::-webkit-scrollbar { width:3px; }
+#chat-messages::-webkit-scrollbar-track { background:transparent; }
+#chat-messages::-webkit-scrollbar-thumb { background:rgba(52,217,196,0.15); border-radius:2px; }
+.chat-msg {
+  max-width:95%; padding:10px 13px; border-radius:12px;
+  font-size:12.5px; line-height:1.5; word-wrap:break-word;
+}
+.chat-msg.user {
+  align-self:flex-end; background:rgba(52,217,196,0.12);
+  color:#e2e8f0; border-bottom-right-radius:4px;
+}
+.chat-msg.bot {
+  align-self:flex-start; background:rgba(255,255,255,0.03);
+  color:#cbd5e1; border-bottom-left-radius:4px;
+  border:1px solid rgba(255,255,255,0.05); width:100%;
+}
+.chat-msg .tbl {
+  width:100%; border-collapse:collapse; margin:4px 0; font-size:11px;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.chat-msg .tbl th {
+  background:rgba(52,217,196,0.08); color:rgba(52,217,196,0.85);
+  font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.3px;
+  padding:5px 6px; border:1px solid rgba(255,255,255,0.06); text-align:left;
+}
+.chat-msg .tbl td {
+  padding:4px 6px; border:1px solid rgba(255,255,255,0.05);
+  color:rgba(255,255,255,0.75);
+}
+.chat-msg .tbl td.num { text-align:right; font-variant-numeric:tabular-nums; font-family:'SF Mono',Consolas,monospace; font-size:10.5px; }
+.chat-msg .tbl tr:nth-child(even) { background:rgba(255,255,255,0.015); }
+.chat-msg .tbl tr:hover { background:rgba(52,217,196,0.04); }
+.chat-msg .tbl .tbl-footer td {
+  font-weight:700; border-top:2px solid rgba(52,217,196,0.2);
+  color:rgba(52,217,196,0.85); background:rgba(52,217,196,0.04);
+}
+.chat-msg .tbl-section {
+  margin:10px 0 2px 0; padding:5px 0 3px 0;
+  border-bottom:1px solid rgba(52,217,196,0.1);
+  font-size:11.5px; color:rgba(52,217,196,0.8);
+}
+.chat-msg small { display:block; margin-top:6px; color:rgba(255,255,255,0.35); font-size:10.5px; line-height:1.4; }
+.chat-suggestions { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.chat-suggestions button {
+  background:rgba(52,217,196,0.06); border:1px solid rgba(52,217,196,0.15);
+  color:rgba(52,217,196,0.75); border-radius:8px; padding:4px 9px;
+  font-size:10.5px; cursor:pointer; transition:all 0.2s;
+}
+.chat-suggestions button:hover { background:rgba(52,217,196,0.15); color:rgba(52,217,196,1); }
+#chat-input-area { padding:10px 12px; border-top:1px solid rgba(52,217,196,0.08); display:flex; gap:8px; }
+#chat-input {
+  flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px; padding:9px 12px; color:#e2e8f0; font-size:12.5px; outline:none;
+}
+#chat-input::placeholder { color:rgba(255,255,255,0.25); }
+#chat-input:focus { border-color:rgba(52,217,196,0.35); }
+#chat-send {
+  width:36px; height:36px; border-radius:10px; background:rgba(52,217,196,0.15);
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background 0.2s;
+}
+#chat-send:hover { background:rgba(52,217,196,0.3); }
+#chat-send svg { width:16px; height:16px; fill:rgba(52,217,196,0.85); }
+@media (max-width:480px) {
+  #chat-panel { width:calc(100vw - 24px); right:12px; bottom:84px; max-height:72vh; }
+  #chat-fab { bottom:16px; right:68px; width:50px; height:50px; }
+}
+</style>
+<button id="chat-fab" onclick="cpluChat.toggle()" title="Consultas CPLU">
+  <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+</button>
+<div id="chat-panel">
+  <div id="chat-header">
+    <div class="dot"></div>
+    <div class="title">Consultas CPLU</div>
+    <div class="badge">offline</div>
+    <button id="chat-clear" onclick="cpluChat.clear()" title="Limpar conversa">
+      <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </button>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-area">
+    <input id="chat-input" type="text" placeholder="Ex: area das feiras de IP" autocomplete="off">
+    <button id="chat-send" onclick="cpluChat.send()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+<script>
+var cpluChat = (function() {
+  var stats = {};
+
+  function haversine(c1, c2) {
+    var R = 6371000, toRad = Math.PI / 180;
+    var dLat = (c2[0]-c1[0]) * toRad, dLon = (c2[1]-c1[1]) * toRad;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(c1[0]*toRad)*Math.cos(c2[0]*toRad)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function lineKm(coords) {
+    var m = 0;
+    for (var i = 0; i < coords.length - 1; i++) m += haversine(coords[i], coords[i+1]);
+    return m / 1000;
+  }
+
+  function polyAreaM2(coords) {
+    if (coords.length < 3) return 0;
+    var toRad = Math.PI / 180;
+    var midLat = coords.reduce(function(s,c){return s+c[0];},0) / coords.length;
+    var mPerDegLat = 111320;
+    var mPerDegLon = 111320 * Math.cos(midLat * toRad);
+    var area = 0;
+    for (var i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+      var xi = coords[i][1] * mPerDegLon, yi = coords[i][0] * mPerDegLat;
+      var xj = coords[j][1] * mPerDegLon, yj = coords[j][0] * mPerDegLat;
+      area += (xj + xi) * (yj - yi);
+    }
+    return Math.abs(area / 2);
+  }
+
+  function fmt(n, dec) {
+    if (typeof dec === 'undefined') dec = 2;
+    return n.toLocaleString('pt-BR', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+  }
+
+  function fmtArea(m2) {
+    if (m2 >= 10000) return fmt(m2/10000) + ' ha';
+    return fmt(m2, 0) + ' m\u00B2';
+  }
+
+  function fmtAreaFull(m2) {
+    if (m2 >= 10000) return fmt(m2/10000) + ' ha (' + fmt(m2, 0) + ' m\u00B2)';
+    return fmt(m2, 0) + ' m\u00B2';
+  }
+
+  function normalize(str) {
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function parseDateBR(s) {
+    var p = s.split('/');
+    return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+  }
+
+  function fmtDate(d) {
+    var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','S\u00E1b'];
+    return ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear() + ' ('+dias[d.getDay()]+')';
+  }
+
+  function nextDates(datas, max) {
+    var hoje = new Date(); hoje.setHours(0,0,0,0);
+    var futuras = [];
+    for (var i = 0; i < datas.length; i++) {
+      var d = parseDateBR(datas[i]);
+      if (d >= hoje) futuras.push(d);
+    }
+    futuras.sort(function(a,b){return a-b;});
+    return futuras.slice(0, max || 3);
+  }
+
+  var SUB_NAMES = {AD:'Cidade Ademar', IP:'Ipiranga', JA:'Jabaquara'};
+  var FREQ_MULT = {'Di\u00E1ria':26,'Alternada SQS':13,'Alternada TQS':13,'Bissemanal QS':8.66,'Bissemanal TS':8.66,'Bissemanal SQ':8.66};
+  var TIPO_NAMES = {VJ:'Jornada', VL:'Logradouros', VC:'Complementar'};
+  var DIA_MAP = {domingo:'Domingo',segunda:'Segunda',terca:'Ter\u00E7a',quarta:'Quarta',quinta:'Quinta',sexta:'Sexta',sabado:'S\u00E1bado'};
+
+  function nKeys(obj) { return Object.keys(obj).length; }
+
+  function computeStats() {
+    var subs = ['AD','IP','JA'];
+
+    var varr = {};
+    subs.forEach(function(s){ varr[s] = {trechos:0, setores:{}, km:0, kmMes:0, tipos:{}, ruas:{}}; });
+    varr.total = {trechos:0, setores:{}, km:0, kmMes:0};
+    if (typeof ROUTES !== 'undefined') ROUTES.forEach(function(r) {
+      var s = varr[r.sub]; if (!s) return;
+      var tipo = r.setor.indexOf('VJ')>-1?'VJ': r.setor.indexOf('VL')>-1?'VL': r.setor.indexOf('VC')>-1?'VC':'VJ';
+      var km = lineKm(r.coords);
+      var mult = FREQ_MULT[r.freq] || 0;
+      s.trechos++; s.setores[r.setor]=1; s.km += km; s.kmMes += km*mult; s.ruas[r.rua]=1;
+      if (!s.tipos[tipo]) s.tipos[tipo] = {trechos:0, setores:{}, km:0, kmMes:0};
+      var t = s.tipos[tipo]; t.trechos++; t.setores[r.setor]=1; t.km += km; t.kmMes += km*mult;
+      varr.total.trechos++; varr.total.setores[r.setor]=1; varr.total.km += km; varr.total.kmMes += km*mult;
+    });
+
+    var feiras = {AD:[], IP:[], JA:[], all:[]};
+    if (typeof FEIRAS !== 'undefined') FEIRAS.forEach(function(f) {
+      var item = {nome:f.nome, sub:f.sub, setor:f.setor, dias:f.dias||'', area: polyAreaM2(f.coords)};
+      if (feiras[f.sub]) feiras[f.sub].push(item);
+      feiras.all.push(item);
+    });
+
+    var go = {};
+    subs.forEach(function(s){ go[s] = {trechos:0, setores:{}, km:0, datas:[]}; });
+    if (typeof GRANDES_OBJETOS !== 'undefined') GRANDES_OBJETOS.forEach(function(g) {
+      var s = go[g.sub]; if (!s) return;
+      s.trechos++; s.setores[g.setor]=1; s.km += lineKm(g.coords);
+      if (g.datas) g.datas.forEach(function(d){ if (s.datas.indexOf(d)===-1) s.datas.push(d); });
+    });
+
+    var mut = {};
+    subs.forEach(function(s){ mut[s] = {trechos:0, setores:{}, km:0, datas:[]}; });
+    if (typeof MUTIRAO !== 'undefined') MUTIRAO.forEach(function(m) {
+      var s = mut[m.sub]; if (!s) return;
+      s.trechos++; s.setores[m.setor]=1; s.km += lineKm(m.coords);
+      if (m.datas) m.datas.forEach(function(d){ if (s.datas.indexOf(d)===-1) s.datas.push(d); });
+    });
+
+    var leep = {AD:[], IP:[], JA:[], all:[]};
+    if (typeof LEEP !== 'undefined') LEEP.forEach(function(l) {
+      var item = {nome:l.nome, sub:l.sub, setor:l.setor, freq:l.freq||'', dias:l.dias||'', area: polyAreaM2(l.coords)};
+      if (leep[l.sub]) leep[l.sub].push(item);
+      leep.all.push(item);
+    });
+
+    var pracas = {AD:[], IP:[], JA:[], all:[]};
+    if (typeof PRACAS !== 'undefined') PRACAS.forEach(function(p) {
+      var item = {nome:p.nome, sub:p.sub, setor:p.setor, freq:p.freq||'', dias:p.dias||'', area: polyAreaM2(p.coords)};
+      if (pracas[p.sub]) pracas[p.sub].push(item);
+      pracas.all.push(item);
+    });
+
+    var nh = {AD:[], IP:[], JA:[], all:[]};
+    if (typeof NUCLEOS_HABITACIONAIS !== 'undefined') NUCLEOS_HABITACIONAIS.forEach(function(n) {
+      var item = {nome:n.nome, sub:n.sub, setor:n.setor, freq:n.freq||'', area: polyAreaM2(n.coords), datas: n.datas||[]};
+      if (nh[n.sub]) nh[n.sub].push(item);
+      nh.all.push(item);
+    });
+
+    var pa = {AD:[], IP:[], JA:[], all:[]};
+    if (typeof PONTOS_APOIO !== 'undefined') PONTOS_APOIO.forEach(function(p) {
+      if (pa[p.sub]) pa[p.sub].push(p);
+      pa.all.push(p);
+    });
+
+    stats = {varr:varr, feiras:feiras, go:go, mut:mut, leep:leep, pracas:pracas, nh:nh, pa:pa};
+  }
+
+  function parseSub(q) {
+    var n = normalize(q);
+    if (/cidade.?ademar|ademar/.test(n)) return 'AD';
+    if (/ipiranga/.test(n)) return 'IP';
+    if (/jabaquara/.test(n)) return 'JA';
+    if (/(^|[^a-z])ad([^a-z]|$)/.test(n)) return 'AD';
+    if (/(^|[^a-z])ip([^a-z]|$)/.test(n)) return 'IP';
+    if (/(^|[^a-z])ja([^a-z]|$)/.test(n)) return 'JA';
+    return null;
+  }
+
+  function parseService(q) {
+    var n = normalize(q);
+    if (/varricao/.test(n)) return 'varricao';
+    if (/(^|[^a-z])vj([^a-z]|$)/.test(n)) return 'varricao';
+    if (/(^|[^a-z])vl([^a-z]|$)/.test(n)) return 'varricao';
+    if (/(^|[^a-z])vc([^a-z]|$)/.test(n)) return 'varricao';
+    if (/feira/.test(n)) return 'feiras';
+    if (/grande.?objeto/.test(n)) return 'go';
+    if (/mutirao/.test(n)) return 'mutirao';
+    if (/lavagem/.test(n)) return 'leep';
+    if (/(^|[^a-z])leep([^a-z]|$)/.test(n)) return 'leep';
+    if (/praca/.test(n)) return 'pracas';
+    if (/nucleo|habitacion|comunidade/.test(n)) return 'nh';
+    if (/ponto.?de.?apoio|base.?operac/.test(n)) return 'pa';
+    return null;
+  }
+
+  function parseDia(q) {
+    var n = normalize(q);
+    for (var k in DIA_MAP) { if (n.indexOf(k) > -1) return DIA_MAP[k]; }
+    return null;
+  }
+
+  function parseTipo(q) {
+    var n = normalize(q);
+    if (/(^|[^a-z])vj([^a-z]|$)/.test(n) || /jornada/.test(n)) return 'VJ';
+    if (/(^|[^a-z])vl([^a-z]|$)/.test(n) || /logradouro/.test(n)) return 'VL';
+    if (/(^|[^a-z])vc([^a-z]|$)/.test(n) || /complementar/.test(n)) return 'VC';
+    return null;
+  }
+
+  function wantsDate(q) { return /quando|data|proximo|proxima|agenda|calendario/.test(normalize(q)); }
+
+  function tbl(headers, rows, footerRow) {
+    var h = '<table class="tbl"><tr>' + headers.map(function(x){return '<th>'+x+'</th>';}).join('') + '</tr>';
+    rows.forEach(function(r) {
+      h += '<tr>' + r.map(function(c,i){return '<td'+(i>0?' class="num"':'')+'>'+c+'</td>';}).join('') + '</tr>';
+    });
+    if (footerRow) {
+      h += '<tr class="tbl-footer">' +
+        footerRow.map(function(c,i){return '<td'+(i>0?' class="num"':'')+'>'+c+'</td>';}).join('') + '</tr>';
+    }
+    return h + '</table>';
+  }
+
+  function subLabel(sub) { return '<b>' + sub + '</b> \u2014 ' + SUB_NAMES[sub]; }
+
+  // ===================== HANDLERS =====================
+
+  function handleVarricao(sub, q) {
+    var v = stats.varr;
+    var tipo = parseTipo(q);
+    var n = normalize(q);
+    var sarjeta = /sarjeta/.test(n);
+    var mult = sarjeta ? 2 : 1;
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Varri\u00E7\u00E3o Manual</b>' + (sarjeta ? ' (km sarjeta)' : ' (km eixo)');
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+    if (tipo) title += ' \u2014 ' + tipo + ' (' + TIPO_NAMES[tipo] + ')';
+
+    var rows = [], totS={}, totKm=0, totKmM=0, totRuas={};
+    subs.forEach(function(s) {
+      var d = v[s]; if (!d) return;
+      Object.assign(totRuas, d.ruas);
+      var tipos = tipo ? [tipo] : ['VJ','VL','VC'];
+      tipos.forEach(function(tp) {
+        var t = d.tipos[tp]; if (!t) return;
+        var ns = nKeys(t.setores);
+        rows.push([s, tp, String(ns), fmt(t.km * mult), fmt(t.kmMes * mult, 0)]);
+        Object.assign(totS, t.setores); totKm += t.km * mult; totKmM += t.kmMes * mult;
+      });
+    });
+
+    if (rows.length === 0) return title + '<br>Nenhum dado para este filtro.';
+
+    return title + tbl(
+      ['SUB','Tipo','Setores','Km Ext.','Km/M\u00EAs'],
+      rows,
+      ['TOTAL','', String(nKeys(totS)), fmt(totKm), fmt(totKmM,0)]
+    ) + '<small>' + (sarjeta ? 'Km sarjeta (eixo \u00D7 2)' : 'Km eixo \u00B7 para sarjeta pergunte "km sarjeta"') +
+      ' \u00B7 ' + nKeys(totRuas) + ' logradouros \u00B7 Di\u00E1ria 26d \u00B7 Alternada 13d \u00B7 Bissem. 8,66d</small>';
+  }
+
+  function handleFeiras(sub, q) {
+    var dia = parseDia(q);
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Feiras Livres</b>';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+    if (dia) title += ' \u2014 ' + dia;
+
+    var allItems = [];
+    subs.forEach(function(s) {
+      (stats.feiras[s]||[]).forEach(function(f) {
+        if (dia && f.dias.indexOf(dia) === -1) return;
+        allItems.push(f);
+      });
+    });
+
+    if (allItems.length === 0) return title + '<br>Nenhuma feira encontrada para este filtro.';
+
+    var resp = title;
+
+    subs.forEach(function(s) {
+      var items = allItems.filter(function(f){return f.sub===s;});
+      if (items.length === 0) return;
+      var subArea = items.reduce(function(sum,f){return sum+f.area;},0);
+
+      resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + items.length + ' feiras \u2014 ' + fmtAreaFull(subArea) + '</div>';
+      var rows = [];
+      items.forEach(function(f, idx) {
+        var diaShort = (f.dias||'').replace('Semanal ','');
+        rows.push([String(idx+1), f.nome, diaShort, fmtArea(f.area)]);
+      });
+      resp += tbl(['#','Local','Dia','Area'], rows, ['','TOTAL ' + s,'', fmtArea(subArea)]);
+    });
+
+    var grandArea = allItems.reduce(function(s,f){return s+f.area;},0);
+    if (subs.length > 1) {
+      resp += '<div class="tbl-section"><b>Total geral: ' + allItems.length + ' feiras \u2014 ' + fmtAreaFull(grandArea) + '</b></div>';
+    }
+    return resp;
+  }
+
+  function handleGO(sub, q) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Grandes Objetos</b> \u2014 Quinzenal';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+
+    if (wantsDate(q)) {
+      var rows = [];
+      subs.forEach(function(s) {
+        var d = stats.go[s]; if (!d) return;
+        var prox = nextDates(d.datas, 5);
+        prox.forEach(function(dt, i) {
+          rows.push([i===0?s:'', fmtDate(dt)]);
+        });
+        if (prox.length === 0) rows.push([s, 'Sem datas futuras']);
+      });
+      return title + ' \u2014 Pr\u00F3ximas datas' + tbl(['SUB','Data'], rows);
+    }
+
+    var rows = [], totT=0, totS={}, totKm=0;
+    subs.forEach(function(s) {
+      var d = stats.go[s]; if (!d) return;
+      rows.push([s, fmt(d.trechos,0), String(nKeys(d.setores)), fmt(d.km)]);
+      totT += d.trechos; Object.assign(totS, d.setores); totKm += d.km;
+    });
+    return title + tbl(
+      ['SUB','Trechos','Setores','Km'],
+      rows,
+      ['TOTAL', fmt(totT,0), String(nKeys(totS)), fmt(totKm)]
+    );
+  }
+
+  function handleMutirao(sub, q) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Mutir\u00E3o</b> \u2014 Trimestral';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+
+    if (wantsDate(q)) {
+      var rows = [];
+      subs.forEach(function(s) {
+        var d = stats.mut[s]; if (!d) return;
+        var prox = nextDates(d.datas, 5);
+        prox.forEach(function(dt, i) {
+          rows.push([i===0?s:'', fmtDate(dt)]);
+        });
+        if (prox.length === 0) rows.push([s, 'Sem datas futuras']);
+      });
+      return title + ' \u2014 Pr\u00F3ximas datas' + tbl(['SUB','Data'], rows);
+    }
+
+    var rows = [], totT=0, totS={}, totKm=0;
+    subs.forEach(function(s) {
+      var d = stats.mut[s]; if (!d) return;
+      rows.push([s, fmt(d.trechos,0), String(nKeys(d.setores)), fmt(d.km)]);
+      totT += d.trechos; Object.assign(totS, d.setores); totKm += d.km;
+    });
+    return title + tbl(
+      ['SUB','Trechos','Setores','Km'],
+      rows,
+      ['TOTAL', fmt(totT,0), String(nKeys(totS)), fmt(totKm)]
+    );
+  }
+
+  function handleLeep(sub, q) {
+    var dia = parseDia(q);
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Lavagem Especial (LEEP)</b>';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+    if (dia) title += ' \u2014 ' + dia;
+
+    var allItems = [];
+    subs.forEach(function(s) {
+      (stats.leep[s]||[]).forEach(function(l) {
+        if (dia && l.dias.indexOf(dia) === -1) return;
+        allItems.push(l);
+      });
+    });
+
+    if (allItems.length === 0) return title + '<br>Nenhum local encontrado.';
+
+    var resp = title;
+    subs.forEach(function(s) {
+      var items = allItems.filter(function(l){return l.sub===s;});
+      if (items.length === 0) return;
+      var subArea = items.reduce(function(sum,l){return sum+l.area;},0);
+      resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + items.length + ' locais \u2014 ' + fmtArea(subArea) + '</div>';
+      var rows = [];
+      items.forEach(function(l, idx) {
+        var freqShort = (l.freq||'').replace('Semanal ','');
+        rows.push([String(idx+1), l.nome, freqShort, fmtArea(l.area)]);
+      });
+      resp += tbl(['#','Local','Freq.','Area'], rows, ['','TOTAL '+s,'', fmtArea(subArea)]);
+    });
+
+    var grandArea = allItems.reduce(function(s,l){return s+l.area;},0);
+    if (subs.length > 1) {
+      resp += '<div class="tbl-section"><b>Total geral: ' + allItems.length + ' locais \u2014 ' + fmtAreaFull(grandArea) + '</b></div>';
+    }
+    return resp;
+  }
+
+  function handlePracas(sub, q) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Limpeza de Pra\u00E7as</b> \u2014 Di\u00E1ria';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+
+    var allItems = [];
+    subs.forEach(function(s) { (stats.pracas[s]||[]).forEach(function(p){ allItems.push(p); }); });
+
+    var resp = title;
+    subs.forEach(function(s) {
+      var items = allItems.filter(function(p){return p.sub===s;});
+      if (items.length === 0) return;
+      var subArea = items.reduce(function(sum,p){return sum+p.area;},0);
+      resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + items.length + ' pra\u00E7as \u2014 ' + fmtArea(subArea) + '</div>';
+      var rows = [];
+      items.forEach(function(p, idx) {
+        rows.push([String(idx+1), p.nome, fmtArea(p.area)]);
+      });
+      resp += tbl(['#','Pra\u00E7a','\u00C1rea'], rows, ['','TOTAL '+s, fmtArea(subArea)]);
+    });
+
+    var grandArea = allItems.reduce(function(s,p){return s+p.area;},0);
+    if (subs.length > 1) {
+      resp += '<div class="tbl-section"><b>Total: ' + allItems.length + ' pra\u00E7as \u2014 ' + fmtAreaFull(grandArea) + '</b></div>';
+    }
+    return resp;
+  }
+
+  function handleNH(sub, q) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>N\u00FAcleos Habitacionais</b> \u2014 Bimestral';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+
+    var allItems = [];
+    subs.forEach(function(s) { (stats.nh[s]||[]).forEach(function(n){ allItems.push(n); }); });
+
+    if (wantsDate(q)) {
+      var resp = title + ' \u2014 Pr\u00F3ximas datas';
+      subs.forEach(function(s) {
+        var items = allItems.filter(function(n){return n.sub===s;});
+        if (items.length === 0) return;
+        resp += '<div class="tbl-section">' + subLabel(s) + '</div>';
+        var rows = [];
+        items.forEach(function(n, idx) {
+          var prox = nextDates(n.datas, 1);
+          rows.push([String(idx+1), n.nome, prox.length>0 ? fmtDate(prox[0]) : '\u2014']);
+        });
+        resp += tbl(['#','N\u00FAcleo','Pr\u00F3xima data'], rows);
+      });
+      return resp;
+    }
+
+    var resp = title;
+    subs.forEach(function(s) {
+      var items = allItems.filter(function(n){return n.sub===s;});
+      if (items.length === 0) return;
+      var subArea = items.reduce(function(sum,n){return sum+n.area;},0);
+      resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + items.length + ' n\u00FAcleos \u2014 ' + fmtArea(subArea) + '</div>';
+      var rows = [];
+      items.forEach(function(n, idx) {
+        rows.push([String(idx+1), n.nome, fmtArea(n.area)]);
+      });
+      resp += tbl(['#','Comunidade','\u00C1rea'], rows, ['','TOTAL '+s, fmtArea(subArea)]);
+    });
+
+    var grandArea = allItems.reduce(function(s,n){return s+n.area;},0);
+    if (subs.length > 1) {
+      resp += '<div class="tbl-section"><b>Total: ' + allItems.length + ' n\u00FAcleos \u2014 ' + fmtAreaFull(grandArea) + '</b></div>';
+    }
+    return resp;
+  }
+
+  function handlePA(sub, q) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = '<b>Pontos de Apoio</b>';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+
+    var allItems = [];
+    subs.forEach(function(s) { (stats.pa[s]||[]).forEach(function(p){ allItems.push(p); }); });
+
+    var resp = title;
+    subs.forEach(function(s) {
+      var items = allItems.filter(function(p){return p.sub===s;});
+      if (items.length === 0) return;
+      resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + items.length + ' pontos</div>';
+      var rows = [];
+      items.forEach(function(p, idx) {
+        rows.push([String(idx+1), p.nome, p.endereco||'']);
+      });
+      resp += tbl(['#','Nome','Endere\u00E7o'], rows);
+    });
+
+    if (subs.length > 1) {
+      resp += '<div class="tbl-section"><b>Total: ' + allItems.length + ' pontos</b></div>';
+    }
+    return resp;
+  }
+
+  function handleResumo(sub) {
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+    var title = sub ? '<b>Resumo \u2014 ' + SUB_NAMES[sub] + ' (' + sub + ')</b>' : '<b>Resumo Geral \u2014 CPLU</b>';
+
+    var vKm=0, vKmM=0, vSet={};
+    subs.forEach(function(s) { var d=stats.varr[s]; if(d){ vKm+=d.km; vKmM+=d.kmMes; Object.assign(vSet,d.setores);} });
+    var fItems=[]; subs.forEach(function(s){ fItems=fItems.concat(stats.feiras[s]||[]); });
+    var fArea = fItems.reduce(function(s,f){return s+f.area;},0);
+    var gT=0, gKm=0; subs.forEach(function(s){ var d=stats.go[s]; if(d){gT+=d.trechos; gKm+=d.km;} });
+    var mT=0, mKm=0; subs.forEach(function(s){ var d=stats.mut[s]; if(d){mT+=d.trechos; mKm+=d.km;} });
+    var lItems=[]; subs.forEach(function(s){ lItems=lItems.concat(stats.leep[s]||[]); });
+    var lArea = lItems.reduce(function(s,l){return s+l.area;},0);
+    var pItems=[]; subs.forEach(function(s){ pItems=pItems.concat(stats.pracas[s]||[]); });
+    var pArea = pItems.reduce(function(s,p){return s+p.area;},0);
+    var nItems=[]; subs.forEach(function(s){ nItems=nItems.concat(stats.nh[s]||[]); });
+    var nArea = nItems.reduce(function(s,n){return s+n.area;},0);
+    var paCount=0; subs.forEach(function(s){ paCount += (stats.pa[s]||[]).length; });
+
+    var resp = title + tbl(
+      ['Servi\u00E7o','Qtd','Extens\u00E3o / \u00C1rea','Freq.'],
+      [
+        ['Varri\u00E7\u00E3o', nKeys(vSet)+' set.', fmt(vKm)+' km \u00B7 '+fmt(vKmM,0)+' km/m\u00EAs', 'Var.'],
+        ['Feiras', String(fItems.length), fmtArea(fArea), 'Semanal'],
+        ['Grandes Obj.', fmt(gT,0)+' trec.', fmt(gKm)+' km', 'Quinz.'],
+        ['Mutir\u00E3o', fmt(mT,0)+' trec.', fmt(mKm)+' km', 'Trim.'],
+        ['LEEP', String(lItems.length), fmtArea(lArea), 'Semanal'],
+        ['Pra\u00E7as', String(pItems.length), fmtArea(pArea), 'Di\u00E1ria'],
+        ['N\u00FAcleos Hab.', String(nItems.length), fmtArea(nArea), 'Bimest.'],
+        ['Pontos Apoio', String(paCount), '', '']
+      ]
+    );
+
+    if (!sub) {
+      resp += '<div class="tbl-section"><b>Comparativo por Subprefeitura</b></div>';
+      resp += tbl(
+        ['Servi\u00E7o','AD','IP','JA'],
+        [
+          ['Varri\u00E7\u00E3o km/m\u00EAs', fmt(stats.varr.AD.kmMes,0), fmt(stats.varr.IP.kmMes,0), fmt(stats.varr.JA.kmMes,0)],
+          ['Feiras', String((stats.feiras.AD||[]).length), String((stats.feiras.IP||[]).length), String((stats.feiras.JA||[]).length)],
+          ['Grandes Obj.', fmt(stats.go.AD.trechos,0), fmt(stats.go.IP.trechos,0), fmt(stats.go.JA.trechos,0)],
+          ['Mutir\u00E3o', fmt(stats.mut.AD.trechos,0), fmt(stats.mut.IP.trechos,0), fmt(stats.mut.JA.trechos,0)],
+          ['LEEP', String((stats.leep.AD||[]).length), String((stats.leep.IP||[]).length), String((stats.leep.JA||[]).length)],
+          ['Pra\u00E7as', String((stats.pracas.AD||[]).length), String((stats.pracas.IP||[]).length), String((stats.pracas.JA||[]).length)],
+          ['N\u00FAcleos Hab.', String((stats.nh.AD||[]).length), String((stats.nh.IP||[]).length), String((stats.nh.JA||[]).length)],
+          ['Pontos Apoio', String((stats.pa.AD||[]).length), String((stats.pa.IP||[]).length), String((stats.pa.JA||[]).length)]
+        ]
+      );
+    }
+    return resp;
+  }
+
+  // ============ RANKING ============
+  function handleRanking(q, sub) {
+    var n = normalize(q);
+    var wantMaior = /maior|mais grande|top/.test(n);
+    var svc = parseService(q);
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+
+    var pool = [], label = '', unit = 'area';
+    if (svc === 'feiras') { label = 'Feiras'; subs.forEach(function(s){ pool = pool.concat(stats.feiras[s]||[]); }); }
+    else if (svc === 'pracas') { label = 'Pra\u00E7as'; subs.forEach(function(s){ pool = pool.concat(stats.pracas[s]||[]); }); }
+    else if (svc === 'leep') { label = 'LEEP'; subs.forEach(function(s){ pool = pool.concat(stats.leep[s]||[]); }); }
+    else if (svc === 'nh') { label = 'N\u00FAcleos'; subs.forEach(function(s){ pool = pool.concat(stats.nh[s]||[]); }); }
+    else return null;
+
+    if (pool.length === 0) return null;
+    pool.sort(function(a,b){ return wantMaior ? b.area - a.area : a.area - b.area; });
+    var top = pool.slice(0, 5);
+
+    var title = '<b>' + (wantMaior ? 'Maiores' : 'Menores') + ' ' + label + '</b>';
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+    var rows = [];
+    top.forEach(function(item, i) {
+      rows.push([String(i+1), item.nome, item.sub, fmtArea(item.area)]);
+    });
+    return title + tbl(['#','Nome','SUB','\u00C1rea'], rows);
+  }
+
+  // ============ BUSCA POR NOME ============
+  function searchByName(q) {
+    var n = normalize(q);
+    // Remove palavras comuns para extrair o nome
+    var stop = ['qual','a','o','e','de','da','do','das','dos','area','m2','onde','fica','quando','que','tem','em','na','no','sobre','info','informacao','detalhe','me','fale','mostre'];
+    var words = n.split(/\s+/).filter(function(w){ return w.length > 2 && stop.indexOf(w) === -1; });
+    if (words.length === 0) return null;
+
+    var searchTerm = words.join(' ');
+    var pools = [
+      {items: stats.feiras.all, tipo: 'Feira Livre', extra: function(i){return i.dias;}},
+      {items: stats.pracas.all, tipo: 'Pra\u00E7a (Limpeza Di\u00E1ria)', extra: function(i){return i.freq;}},
+      {items: stats.leep.all, tipo: 'Lavagem Especial', extra: function(i){return i.freq;}},
+      {items: stats.nh.all, tipo: 'N\u00FAcleo Habitacional', extra: function(i){return i.freq;}},
+      {items: stats.pa.all, tipo: 'Ponto de Apoio', extra: function(i){return i.endereco||'';}}
+    ];
+
+    var matches = [];
+    pools.forEach(function(pool) {
+      pool.items.forEach(function(item) {
+        var nomeN = normalize(item.nome);
+        var score = 0;
+        words.forEach(function(w) { if (nomeN.indexOf(w) > -1) score++; });
+        if (score > 0 && score >= Math.min(2, words.length)) {
+          matches.push({item: item, tipo: pool.tipo, extra: pool.extra(item), score: score});
+        }
+      });
+    });
+
+    if (matches.length === 0) return null;
+    matches.sort(function(a,b){ return b.score - a.score; });
+    var top = matches.slice(0, 8);
+
+    var resp = '<b>Resultados para "' + searchTerm + '"</b>';
+    var rows = [];
+    top.forEach(function(m, i) {
+      var areaStr = (typeof m.item.area === 'number' && m.item.area > 0) ? fmtArea(m.item.area) : '\u2014';
+      rows.push([String(i+1), m.item.nome, m.tipo, m.item.sub || '', areaStr]);
+    });
+    resp += tbl(['#','Nome','Servi\u00E7o','SUB','\u00C1rea'], rows);
+    if (matches.length > 8) resp += '<small>' + (matches.length - 8) + ' outros resultados omitidos. Refine a busca.</small>';
+    return resp;
+  }
+
+  // ============ AGENDA DO DIA ============
+  function handleAgendaDia(sub, amanha) {
+    var d = new Date();
+    if (amanha) d.setDate(d.getDate() + 1);
+    var diasSem = ['Domingo','Segunda','Ter\u00E7a','Quarta','Quinta','Sexta','S\u00E1bado'];
+    var diaNome = diasSem[d.getDay()];
+    var dataStr = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
+    var subs = sub ? [sub] : ['AD','IP','JA'];
+
+    var title = '<b>Agenda ' + (amanha ? 'de amanh\u00E3' : 'de hoje') + '</b> \u2014 ' + diaNome + ', ' + dataStr;
+    if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
+    var resp = title;
+
+    // Feiras do dia
+    var feirasDia = [];
+    subs.forEach(function(s) {
+      (stats.feiras[s]||[]).forEach(function(f) { if (f.dias.indexOf(diaNome) > -1) feirasDia.push(f); });
+    });
+    if (feirasDia.length > 0) {
+      resp += '<div class="tbl-section"><b>Feiras Livres</b> \u2014 ' + feirasDia.length + '</div>';
+      var rows = [];
+      feirasDia.forEach(function(f, i) { rows.push([String(i+1), f.nome, f.sub, fmtArea(f.area)]); });
+      resp += tbl(['#','Local','SUB','\u00C1rea'], rows);
+    }
+
+    // LEEP do dia
+    var leepDia = [];
+    subs.forEach(function(s) {
+      (stats.leep[s]||[]).forEach(function(l) { if (l.dias.indexOf(diaNome) > -1) leepDia.push(l); });
+    });
+    if (leepDia.length > 0) {
+      resp += '<div class="tbl-section"><b>Lavagem Especial</b> \u2014 ' + leepDia.length + '</div>';
+      var rows2 = [];
+      leepDia.forEach(function(l, i) { rows2.push([String(i+1), l.nome, l.sub]); });
+      resp += tbl(['#','Local','SUB'], rows2);
+    }
+
+    // GO na data
+    var dataCheck = dataStr;
+    var goDia = [];
+    subs.forEach(function(s) {
+      var dd = stats.go[s];
+      if (dd && dd.datas.indexOf(dataCheck) > -1) goDia.push(s);
+    });
+    if (goDia.length > 0) {
+      resp += '<div class="tbl-section"><b>Grandes Objetos</b> \u2014 coleta em: ' + goDia.join(', ') + '</div>';
+    }
+
+    // Mutirao na data
+    var mutDia = [];
+    subs.forEach(function(s) {
+      var dd = stats.mut[s];
+      if (dd && dd.datas.indexOf(dataCheck) > -1) mutDia.push(s);
+    });
+    if (mutDia.length > 0) {
+      resp += '<div class="tbl-section"><b>Mutir\u00E3o</b> \u2014 atividade em: ' + mutDia.join(', ') + '</div>';
+    }
+
+    // Pracas sempre (diaria)
+    var pracasCount = 0;
+    subs.forEach(function(s){ pracasCount += (stats.pracas[s]||[]).length; });
+    resp += '<div class="tbl-section"><b>Limpeza de Pra\u00E7as</b> \u2014 ' + pracasCount + ' pra\u00E7as (di\u00E1ria)</div>';
+
+    if (feirasDia.length === 0 && leepDia.length === 0 && goDia.length === 0 && mutDia.length === 0) {
+      resp += '<br><small>Sem feiras, LEEP, grandes objetos ou mutir\u00E3o programados' + (sub ? ' nesta SUB' : '') + '.</small>';
+    }
+    return resp;
+  }
+
+  // ============ AJUDA ============
+  function handleHelp() {
+    return '<b>O que posso responder</b>' +
+      tbl(['Categoria','Exemplos'], [
+        ['Varri\u00E7\u00E3o', 'varri\u00E7\u00E3o IP \u00B7 km sarjeta AD \u00B7 VJ Jabaquara'],
+        ['Feiras', 'feiras de domingo \u00B7 \u00E1rea feiras JA \u00B7 maior feira'],
+        ['Pra\u00E7as', 'pra\u00E7as IP \u00B7 maior pra\u00E7a'],
+        ['Mutir\u00E3o', 'mutir\u00E3o AD \u00B7 pr\u00F3ximo mutir\u00E3o'],
+        ['Grandes Obj.', 'grandes objetos \u00B7 quando \u00E9 a coleta'],
+        ['LEEP', 'lavagem JA \u00B7 leep de segunda'],
+        ['N\u00FAcleos', 'n\u00FAcleos IP \u00B7 pr\u00F3xima limpeza comunidades'],
+        ['Agenda', 'o que tem hoje \u00B7 feiras amanh\u00E3'],
+        ['Busca', 'Pra\u00E7a Joaniza \u00B7 Comunidade Heli\u00F3polis'],
+        ['Resumo', 'resumo geral \u00B7 resumo IP']
+      ]) +
+      '<small>Filtre qualquer consulta por SUB (AD, IP, JA), dia da semana ou tipo (VJ/VL/VC).</small>';
+  }
+
+  function processQuery(q) {
+    var sub = parseSub(q);
+    var svc = parseService(q);
+    var n = normalize(q);
+
+    // Ajuda
+    if (/^ajuda$|^help$|o que voce faz|como usar|^\?$/.test(n)) return handleHelp();
+
+    // "hoje" / "amanha" sem servico = agenda do dia
+    if (!svc && /hoje|amanha/.test(n)) return handleAgendaDia(sub, /amanha/.test(n));
+
+    // Servicos especificos PRIMEIRO (corrige bug do km)
+    if (svc === 'feiras') return handleFeiras(sub, q);
+    if (svc === 'go') return handleGO(sub, q);
+    if (svc === 'mutirao') return handleMutirao(sub, q);
+    if (svc === 'leep') return handleLeep(sub, q);
+    if (svc === 'pracas') return handlePracas(sub, q);
+    if (svc === 'nh') return handleNH(sub, q);
+    if (svc === 'pa') return handlePA(sub, q);
+    if (svc === 'varricao') return handleVarricao(sub, q);
+
+    // km sem servico definido = varricao (fallback)
+    if (/(^|[^a-z])km([^a-z]|$)/.test(n)) return handleVarricao(sub, q);
+
+    // Resumo
+    if (/resum|geral|tudo|overview|dashboard|visao/.test(n)) return handleResumo(sub);
+
+    // Ranking (maior/menor)
+    if (/maior|menor|top|ranking/.test(n)) {
+      var rk = handleRanking(q, sub);
+      if (rk) return rk;
+    }
+
+    // Busca por nome (feiras, pracas, leep, nucleos, pontos de apoio)
+    var nameResult = searchByName(q);
+    if (nameResult) return nameResult;
+
+    if (sub && !svc) return handleResumo(sub);
+    return null;
+  }
+
+  var chatOpen = false;
+
+  function addMsg(html, type) {
+    var c = document.getElementById('chat-messages');
+    var d = document.createElement('div');
+    d.className = 'chat-msg ' + type;
+    d.innerHTML = html;
+    c.appendChild(d);
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function addSuggestions(arr) {
+    var c = document.getElementById('chat-messages');
+    var d = document.createElement('div');
+    d.className = 'chat-suggestions';
+    arr.forEach(function(s) {
+      var b = document.createElement('button');
+      b.textContent = s;
+      b.onclick = function() {
+        document.getElementById('chat-input').value = s;
+        cpluChat.send();
+      };
+      d.appendChild(b);
+    });
+    c.appendChild(d);
+    c.scrollTop = c.scrollHeight;
+  }
+
+  function showWelcome() {
+    addMsg('<b>Consultas CPLU</b><br>' +
+      'Pergunte sobre qualquer servi\u00E7o, subprefeitura ou local espec\u00EDfico:<br><br>' +
+      '<i>\u2022 Varri\u00E7\u00E3o no Ipiranga</i> \u00B7 <i>km sarjeta AD</i><br>' +
+      '<i>\u2022 \u00C1rea das feiras de AD</i> \u00B7 <i>maior feira</i><br>' +
+      '<i>\u2022 O que tem hoje?</i> \u00B7 <i>feiras amanh\u00E3</i><br>' +
+      '<i>\u2022 Pra\u00E7a Joaniza</i> (busca por nome)<br>' +
+      '<i>\u2022 Pr\u00F3ximo mutir\u00E3o em Ademar</i><br><br>' +
+      'Digite <b>ajuda</b> para ver tudo.', 'bot');
+    addSuggestions(['Resumo geral','O que tem hoje?','Varri\u00E7\u00E3o IP','Maior feira','Feiras AD','Mutir\u00E3o','Ajuda']);
+  }
+
+  return {
+    toggle: function() {
+      chatOpen = !chatOpen;
+      document.getElementById('chat-panel').classList.toggle('visible', chatOpen);
+      document.getElementById('chat-fab').classList.toggle('open', chatOpen);
+      if (chatOpen) {
+        document.getElementById('chat-input').focus();
+      } else {
+        // Reset ao fechar
+        cpluChat.clear();
+      }
+    },
+    clear: function() {
+      var c = document.getElementById('chat-messages');
+      c.innerHTML = '';
+      document.getElementById('chat-input').value = '';
+      showWelcome();
+    },
+    send: function() {
+      var input = document.getElementById('chat-input');
+      var q = input.value.trim();
+      if (!q) return;
+      input.value = '';
+      addMsg(q, 'user');
+      setTimeout(function() {
+        var answer = processQuery(q);
+        if (answer) {
+          addMsg(answer, 'bot');
+        } else {
+          addMsg('N\u00E3o entendi. Pergunte sobre: <b>varri\u00E7\u00E3o</b>, <b>feiras</b>, <b>pra\u00E7as</b>, <b>mutir\u00E3o</b>, <b>grandes objetos</b>, <b>LEEP</b>, <b>n\u00FAcleos</b> ou <b>pontos de apoio</b>.<br>Filtre por sub: <b>AD</b>, <b>IP</b>, <b>JA</b> e dia da semana.', 'bot');
+          addSuggestions(['Resumo geral','Varri\u00E7\u00E3o','Feiras','Pra\u00E7as','Mutir\u00E3o','LEEP','N\u00FAcleos']);
+        }
+      }, 120);
+    },
+    init: function() {
+      computeStats();
+      showWelcome();
+      document.getElementById('chat-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); cpluChat.send(); }
+      });
+    }
+  };
+})();
+
+if (document.readyState === 'complete') { cpluChat.init(); }
+else { window.addEventListener('load', function() { cpluChat.init(); }); }
+
+</script>
+
+
+
+
 </body>
 </html>
