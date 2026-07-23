@@ -3367,7 +3367,52 @@ var cpluChat = (function() {
       pa.all.push(p);
     });
 
-    stats = {varr:varr, feiras:feiras, go:go, mut:mut, leep:leep, pracas:pracas, nh:nh, pa:pa};
+    // ============ INDICE DE SETORES ============
+    var setorIdx = {};
+    function idxSetor(code, svcName, sub) {
+      if (!setorIdx[code]) {
+        setorIdx[code] = {code: code, svc: svcName, sub: sub, trechos: 0, km: 0, kmMes: 0, ruas: {}, freqs: {}, datas: [], items: [], area: 0};
+      }
+      return setorIdx[code];
+    }
+    if (typeof ROUTES !== 'undefined') ROUTES.forEach(function(r) {
+      var e = idxSetor(r.setor, 'Varri\u00E7\u00E3o', r.sub);
+      var km = lineKm(r.coords);
+      e.trechos++; e.km += km; e.kmMes += km * (FREQ_MULT[r.freq]||0);
+      e.ruas[r.rua]=1; e.freqs[r.freq]=1;
+    });
+    if (typeof GRANDES_OBJETOS !== 'undefined') GRANDES_OBJETOS.forEach(function(g) {
+      var e = idxSetor(g.setor, 'Grandes Objetos', g.sub);
+      e.trechos++; e.km += lineKm(g.coords); e.ruas[g.rua]=1;
+      if (g.datas) g.datas.forEach(function(d){ if (e.datas.indexOf(d)===-1) e.datas.push(d); });
+    });
+    if (typeof MUTIRAO !== 'undefined') MUTIRAO.forEach(function(m) {
+      var e = idxSetor(m.setor, 'Mutir\u00E3o', m.sub);
+      e.trechos++; e.km += lineKm(m.coords); e.ruas[m.rua]=1;
+      if (m.datas) m.datas.forEach(function(d){ if (e.datas.indexOf(d)===-1) e.datas.push(d); });
+    });
+    if (typeof FEIRAS !== 'undefined') FEIRAS.forEach(function(f) {
+      var e = idxSetor(f.setor, 'Feira Livre', f.sub);
+      e.items.push(f.nome); e.area += polyAreaM2(f.coords);
+      if (f.dias) e.freqs[f.dias]=1;
+    });
+    if (typeof LEEP !== 'undefined') LEEP.forEach(function(l) {
+      var e = idxSetor(l.setor, 'Lavagem Especial', l.sub);
+      e.items.push(l.nome); e.area += polyAreaM2(l.coords);
+      if (l.freq) e.freqs[l.freq]=1;
+    });
+    if (typeof PRACAS !== 'undefined') PRACAS.forEach(function(p) {
+      var e = idxSetor(p.setor, 'Limpeza de Pra\u00E7as', p.sub);
+      e.items.push(p.nome); e.area += polyAreaM2(p.coords);
+      if (p.freq) e.freqs[p.freq]=1;
+    });
+    if (typeof NUCLEOS_HABITACIONAIS !== 'undefined') NUCLEOS_HABITACIONAIS.forEach(function(n) {
+      var e = idxSetor(n.setor, 'N\u00FAcleo Habitacional', n.sub);
+      e.items.push(n.nome); e.area += polyAreaM2(n.coords);
+      if (n.datas) n.datas.forEach(function(d){ if (e.datas.indexOf(d)===-1) e.datas.push(d); });
+    });
+
+    stats = {varr:varr, feiras:feiras, go:go, mut:mut, leep:leep, pracas:pracas, nh:nh, pa:pa, setorIdx:setorIdx};
   }
 
   function parseSub(q) {
@@ -3893,6 +3938,83 @@ var cpluChat = (function() {
     return resp;
   }
 
+  // ============ BUSCA POR SETOR ============
+  var SVC_TO_CODE = {varricao: ['VJ','VL','VC'], go: ['GO'], mutirao: ['MT'], feiras: ['LF'], leep: ['LE'], pracas: ['VP'], nh: ['NH']};
+
+  function parseSetorNum(q) {
+    var n = normalize(q);
+    // "setor 02", "setor 0033", "setor vj0033", "setor 33"
+    var m = n.match(/setor\s*(?:n[\u00BA\u00B0o]?\s*)?([a-z]{2})?\s*0*(\d{1,4})/);
+    if (m) return {tipoCode: m[1] ? m[1].toUpperCase() : null, num: parseInt(m[2], 10)};
+    return null;
+  }
+
+  function handleSetor(q, sub, svc) {
+    var parsed = parseSetorNum(q);
+    if (!parsed) return null;
+
+    var wantCodes = parsed.tipoCode ? [parsed.tipoCode] : (svc && SVC_TO_CODE[svc] ? SVC_TO_CODE[svc] : null);
+
+    var matches = [];
+    for (var code in stats.setorIdx) {
+      var e = stats.setorIdx[code];
+      // Extract trailing number and tipo code
+      var m = code.match(/([A-Z]{2})(\d{4})$/);
+      if (!m) continue;
+      var codeNum = parseInt(m[2], 10);
+      var codeTipo = m[1];
+      if (codeNum !== parsed.num) continue;
+      if (sub && e.sub !== sub) continue;
+      if (wantCodes && wantCodes.indexOf(codeTipo) === -1) continue;
+      matches.push(e);
+    }
+
+    if (matches.length === 0) {
+      var filtros = [];
+      if (sub) filtros.push('SUB ' + sub);
+      if (svc) filtros.push('servi\u00E7o informado');
+      return '<b>Setor ' + ('0000'+parsed.num).slice(-4) + '</b><br>Nenhum setor encontrado' +
+        (filtros.length ? ' com os filtros: ' + filtros.join(', ') : '') +
+        '.<br><small>Dica: informe o servi\u00E7o e a SUB. Ex: "setor 33 varri\u00E7\u00E3o IP"</small>';
+    }
+
+    // Se muitos matches sem filtro, mostrar resumo
+    if (matches.length > 6) {
+      var rows = [];
+      matches.slice(0, 15).forEach(function(e, i) {
+        rows.push([String(i+1), e.code, e.svc, e.sub]);
+      });
+      return '<b>Setores terminados em ' + ('0000'+parsed.num).slice(-4) + '</b> \u2014 ' + matches.length + ' encontrados' +
+        tbl(['#','C\u00F3digo','Servi\u00E7o','SUB'], rows) +
+        '<small>Refine com servi\u00E7o e/ou SUB. Ex: "setor ' + parsed.num + ' varri\u00E7\u00E3o IP"</small>';
+    }
+
+    // Detalhe de cada match
+    var resp = '';
+    matches.forEach(function(e) {
+      resp += '<div class="tbl-section"><b>' + e.code + '</b> \u2014 ' + e.svc + ' \u2014 ' + SUB_NAMES[e.sub] + '</div>';
+      var rows = [];
+      if (e.trechos > 0) {
+        rows.push(['Trechos', fmt(e.trechos, 0)]);
+        rows.push(['Extens\u00E3o', fmt(e.km) + ' km (eixo)']);
+        if (e.kmMes > 0) rows.push(['Produ\u00E7\u00E3o mensal', fmt(e.kmMes, 0) + ' km/m\u00EAs']);
+        rows.push(['Logradouros', String(nKeys(e.ruas))]);
+      }
+      if (e.items.length > 0) {
+        rows.push(['Locais', e.items.slice(0,5).join('; ') + (e.items.length > 5 ? ' (+' + (e.items.length-5) + ')' : '')]);
+        if (e.area > 0) rows.push(['\u00C1rea', fmtAreaFull(e.area)]);
+      }
+      var freqList = Object.keys(e.freqs);
+      if (freqList.length > 0) rows.push(['Frequ\u00EAncia', freqList.join(', ')]);
+      if (e.datas.length > 0) {
+        var prox = nextDates(e.datas, 3);
+        if (prox.length > 0) rows.push(['Pr\u00F3ximas datas', prox.map(fmtDate).join('<br>')]);
+      }
+      resp += tbl(['Campo','Valor'], rows);
+    });
+    return resp;
+  }
+
   // ============ AJUDA ============
   function handleHelp() {
     return '<b>O que posso responder</b>' +
@@ -3906,6 +4028,7 @@ var cpluChat = (function() {
         ['N\u00FAcleos', 'n\u00FAcleos IP \u00B7 pr\u00F3xima limpeza comunidades'],
         ['Agenda', 'o que tem hoje \u00B7 feiras amanh\u00E3'],
         ['Busca', 'Pra\u00E7a Joaniza \u00B7 Comunidade Heli\u00F3polis'],
+        ['Setor', 'setor 33 varri\u00E7\u00E3o IP \u00B7 setor 02 mutir\u00E3o'],
         ['Resumo', 'resumo geral \u00B7 resumo IP']
       ]) +
       '<small>Filtre qualquer consulta por SUB (AD, IP, JA), dia da semana ou tipo (VJ/VL/VC).</small>';
@@ -3918,6 +4041,12 @@ var cpluChat = (function() {
 
     // Ajuda
     if (/^ajuda$|^help$|o que voce faz|como usar|^\?$/.test(n)) return handleHelp();
+
+    // Busca por setor (prioridade alta)
+    if (/setor/.test(n)) {
+      var setorResult = handleSetor(q, sub, svc);
+      if (setorResult) return setorResult;
+    }
 
     // "hoje" / "amanha" sem servico = agenda do dia
     if (!svc && /hoje|amanha/.test(n)) return handleAgendaDia(sub, /amanha/.test(n));
