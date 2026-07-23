@@ -3433,7 +3433,7 @@ var cpluChat = (function() {
     if (/(^|[^a-z])vl([^a-z]|$)/.test(n)) return 'varricao';
     if (/(^|[^a-z])vc([^a-z]|$)/.test(n)) return 'varricao';
     if (/feira/.test(n)) return 'feiras';
-    if (/grande.?objeto/.test(n)) return 'go';
+    if (/grandes?.?objetos?|cata.?bagulho/.test(n)) return 'go';
     if (/mutirao/.test(n)) return 'mutirao';
     if (/lavagem/.test(n)) return 'leep';
     if (/(^|[^a-z])leep([^a-z]|$)/.test(n)) return 'leep';
@@ -3551,7 +3551,7 @@ var cpluChat = (function() {
 
   function handleGO(sub, q) {
     var subs = sub ? [sub] : ['AD','IP','JA'];
-    var title = '<b>Grandes Objetos</b> \u2014 Quinzenal';
+    var title = '<b>Grandes Objetos (Cata-Bagulho)</b> \u2014 Quinzenal';
     if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
 
     if (wantsDate(q)) {
@@ -4023,7 +4023,7 @@ var cpluChat = (function() {
         ['Feiras', 'feiras de domingo \u00B7 \u00E1rea feiras JA \u00B7 maior feira'],
         ['Pra\u00E7as', 'pra\u00E7as IP \u00B7 maior pra\u00E7a'],
         ['Mutir\u00E3o', 'mutir\u00E3o AD \u00B7 pr\u00F3ximo mutir\u00E3o'],
-        ['Grandes Obj.', 'grandes objetos \u00B7 quando \u00E9 a coleta'],
+        ['Grandes Obj.', 'cata-bagulho \u00B7 grandes objetos \u00B7 quando \u00E9 a coleta'],
         ['LEEP', 'lavagem JA \u00B7 leep de segunda'],
         ['N\u00FAcleos', 'n\u00FAcleos IP \u00B7 pr\u00F3xima limpeza comunidades'],
         ['Agenda', 'o que tem hoje \u00B7 feiras amanh\u00E3'],
