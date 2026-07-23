@@ -3997,7 +3997,8 @@ var cpluChat = (function() {
       if (e.trechos > 0) {
         rows.push(['Trechos', fmt(e.trechos, 0)]);
         rows.push(['Extens\u00E3o', fmt(e.km) + ' km (eixo)']);
-        if (e.kmMes > 0) rows.push(['Produ\u00E7\u00E3o mensal', fmt(e.kmMes, 0) + ' km/m\u00EAs']);
+        if (e.svc === 'Varri\u00E7\u00E3o') rows.push(['KM Sarjeta', fmt(e.km * 2) + ' km']);
+        else if (e.kmMes > 0) rows.push(['Produ\u00E7\u00E3o mensal', fmt(e.kmMes, 0) + ' km/m\u00EAs']);
         rows.push(['Logradouros', String(nKeys(e.ruas))]);
       }
       if (e.items.length > 0) {
