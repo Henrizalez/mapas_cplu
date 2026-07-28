@@ -1903,6 +1903,7 @@ function buildLineLayer(route, serviceId){
   pl.on('mouseout',  () => { if (!pl._isVisible) return; pl.setStyle({ weight: 3, opacity: 0.85 }); hideInfo(); });
   pl.on('click', () => { if (pl._isVisible) toggleSectorSelection(key, true); });
   pl.addTo(map);
+  if (pl._path) pl._path.style.pointerEvents = 'none';
   return { layer: pl, route, key, serviceId };
 }
 
@@ -1953,6 +1954,7 @@ function buildPolygonLayer(route, serviceId){
     map.flyToBounds(pg.getBounds(), { padding: [80, 80], duration: 0.5, maxZoom: 16 });
   });
   pg.addTo(map);
+  if (pg._path) pg._path.style.pointerEvents = 'none';
   return { layer: pg, route, key, serviceId };
 }
 
@@ -2025,8 +2027,13 @@ function lastDigits(code, n){
         iconAnchor: [13, 13]
       });
       const marker = L.marker(centroid, { icon, interactive: true, opacity: 0 });
-      marker.on('click', () => openSectorDetail(sampleRouteBySetor[key], serviceId));
+      // Guarda: rotulo oculto nunca dispara o detalhe (defesa extra alem do hit-test)
+      marker.on('click', () => {
+        if (!marker._isVisible) return;
+        openSectorDetail(sampleRouteBySetor[key], serviceId);
+      });
       marker.addTo(map);
+      if (marker._icon) marker._icon.style.pointerEvents = 'none';
       marker._isVisible = false;
       marker._serviceId = serviceId;
       sectorLabelMarkers[markerKey] = marker;
@@ -2069,6 +2076,7 @@ function updateEcopontosVisibility(){
     const shouldShow = state.service === 'varricao' && state.showEcopontos && state.subs.has(sub);
     marker._isVisible = shouldShow;
     marker.setStyle({ opacity: shouldShow ? 1 : 0, fillOpacity: shouldShow ? 0.9 : 0 });
+    setHitTest(marker, shouldShow);
   });
 }
 
@@ -2154,6 +2162,7 @@ function updateApoioVisibility(){
     const shouldShow = state.service && state.showApoio && state.subs.has(sub);
     marker._isVisible = shouldShow;
     marker.setStyle({ opacity: shouldShow ? 1 : 0, fillOpacity: shouldShow ? 0.9 : 0 });
+    setHitTest(marker, shouldShow);
   });
 }
 
@@ -2643,6 +2652,15 @@ function getVisibleSetorKeys(){
   return keys;
 }
 
+// Camadas ocultas continuam no DOM e, mesmo com opacity 0, seguem capturando
+// cliques e hover. Era isso que fazia um rotulo de setor invisivel (de outro
+// servico) "roubar" o clique do rotulo visivel logo abaixo dele. Desligar o
+// pointer-events das camadas ocultas resolve em todo o sistema.
+function setHitTest(layer, enabled){
+  const el = layer._path || layer._icon;
+  if (el) el.style.pointerEvents = enabled ? '' : 'none';
+}
+
 function applyFilters(){
   const visibleSetorKeys = new Set();
 
@@ -2666,6 +2684,7 @@ function applyFilters(){
         color: executaHoje ? '#f59e0b' : layer._baseColor
       });
     }
+    setHitTest(layer, visible);
     if (visible) visibleSetorKeys.add(key);
   });
 
@@ -2679,6 +2698,9 @@ function applyFilters(){
       visibleSetorKeys.has(setorKeyOnly);
     marker._isVisible = shouldShow;
     marker.setOpacity(shouldShow ? 1 : 0);
+    setHitTest(marker, shouldShow);
+    // Rotulos ativos sobem no empilhamento para nunca ficarem sob camadas antigas
+    marker.setZIndexOffset(shouldShow ? 1000 : 0);
   });
 
   const statFiltrados = document.getElementById('stat-setores-filtrados');
