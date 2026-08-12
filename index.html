@@ -739,6 +739,37 @@
   }
 
   /* Botões flutuantes — estilo compartilhado */
+  .sector-color{
+    display:none;
+    margin-top:10px; padding:10px;
+    border:1px solid var(--line); border-radius: var(--radius);
+    background: rgba(255,255,255,0.02);
+  }
+  .sector-color.show{ display:block; }
+  .sector-color .sc-head{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .sector-color .sc-title{
+    font-family: var(--mono); font-size:10px; letter-spacing:0.06em;
+    text-transform:uppercase; color: var(--ink-faint);
+  }
+  .sector-color .sc-title b{ color: var(--ink-dim); }
+  .sector-color .sc-row{ display:flex; align-items:center; gap:10px; }
+  .sector-color input[type="color"]{
+    width:34px; height:28px; padding:0; flex-shrink:0; cursor:pointer;
+    background:transparent; border:1px solid var(--line); border-radius:6px;
+  }
+  .sector-color input[type="color"]::-webkit-color-swatch-wrapper{ padding:2px; }
+  .sector-color input[type="color"]::-webkit-color-swatch{ border:none; border-radius:4px; }
+  .sector-color .sc-presets{ display:flex; flex-wrap:wrap; gap:5px; }
+  .sector-color .sc-presets button{
+    width:17px; height:17px; border-radius:50%; cursor:pointer;
+    border:1px solid rgba(255,255,255,0.25); padding:0;
+    transition: transform 0.15s;
+  }
+  .sector-color .sc-presets button:hover{ transform: scale(1.18); }
+
   .sector-row .sector-ruas{
     display:block; width:100%; margin-top:3px;
     font-size:10.5px; line-height:1.35; color: var(--ink-dim);
@@ -792,6 +823,8 @@
   body.printing{ background:#fff !important; overflow:visible !important; }
   body.printing #sidebar,
   body.printing #toggle-sidebar,
+  body.printing #address-search,
+  body.printing #addr-results,
   body.printing .map-float-btn,
   body.printing #chat-fab,
   body.printing #chat-panel,
@@ -1678,9 +1711,18 @@ const SERVICE_SECTOR_PALETTE = {
   mecanizada: corPorSetorMecanizada
 };
 
-function corPara(serviceId, key){
+// Cores escolhidas pelo usuario, por servico+setor. Sobrepoem a paleta
+// procedural quando existem. Chave: "servicoId|SUB|CODIGO".
+const coresCustom = {};
+
+function corOriginal(serviceId, key){
   if (SERVICE_SECTOR_PALETTE[serviceId]) return SERVICE_SECTOR_PALETTE[serviceId][key] || '#3dd6c4';
   return SERVICE_FIXED_COLOR[serviceId] || '#3dd6c4';
+}
+
+function corPara(serviceId, key){
+  const custom = coresCustom[serviceId + '|' + key];
+  return custom || corOriginal(serviceId, key);
 }
 
 // ---------- Lookups de rótulo (por serviço)----------
@@ -2577,6 +2619,16 @@ function renderFiltersArea(){
         <input type="text" id="sector-search" placeholder="Buscar setor ou logradouro...">
       </div>
       <div id="sector-list"></div>
+      <div id="sector-color" class="sector-color">
+        <div class="sc-head">
+          <span class="sc-title">Cor do setor <b id="sc-code"></b></span>
+          <span class="clear-btn" id="sc-reset">restaurar</span>
+        </div>
+        <div class="sc-row">
+          <input type="color" id="sc-picker" title="Escolher cor">
+          <div class="sc-presets" id="sc-presets"></div>
+        </div>
+      </div>
     </div>
     <div class="block">
       <div class="block-label">Resumo da seleção</div>
@@ -2599,6 +2651,24 @@ function renderFiltersArea(){
 
   document.getElementById('clear-setores').addEventListener('click', () => { state.setores.clear(); renderAll(); });
   document.getElementById('sector-search').addEventListener('input', (e) => { state.searchTerm = e.target.value; renderSectorList(); });
+
+  // Troca de cor do setor isolado
+  const scPicker = document.getElementById('sc-picker');
+  if (scPicker){
+    scPicker.addEventListener('input', (e) => {
+      if (state.setores.size !== 1) return;
+      aplicarCorSetor([...state.setores][0], e.target.value);
+      renderSectorColor();
+    });
+  }
+  const scReset = document.getElementById('sc-reset');
+  if (scReset){
+    scReset.addEventListener('click', () => {
+      if (state.setores.size !== 1) return;
+      aplicarCorSetor([...state.setores][0], null);
+      renderSectorColor();
+    });
+  }
 
   if (svc.extraField){
     renderExtraList();
@@ -2937,6 +3007,101 @@ function renderActionButtons(){
   if (prt) prt.classList.toggle('show', temSub);
 }
 
+// ---------- Troca de cor do setor selecionado ----------
+const SC_PRESETS = ['#3dd6c4','#f59e0b','#ef4444','#a855f7','#22c55e',
+                    '#3b82f6','#ec4899','#eab308','#14b8a6','#f97316'];
+
+// Converte a cor da paleta (hsl) para hex, que e o formato aceito
+// pelo <input type="color">.
+function corParaHex(cor){
+  if (!cor) return '#3dd6c4';
+  if (cor[0] === '#') return cor;
+  const m = cor.match(/hsl\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+  if (!m) return '#3dd6c4';
+  const h = parseFloat(m[1]) / 360, s = parseFloat(m[2]) / 100, l = parseFloat(m[3]) / 100;
+  const f = k => {
+    const a = s * Math.min(l, 1 - l);
+    const x = (k + h * 12) % 12;
+    const v = l - a * Math.max(-1, Math.min(x - 3, Math.min(9 - x, 1)));
+    return Math.round(v * 255).toString(16).padStart(2, '0');
+  };
+  return '#' + f(0) + f(8) + f(4);
+}
+
+// Repinta as geometrias e o rotulo numerico de um setor.
+function aplicarCorSetor(key, cor){
+  const svcId = state.service;
+  if (!svcId) return;
+  const chave = svcId + '|' + key;
+
+  if (cor) coresCustom[chave] = cor;
+  else delete coresCustom[chave];
+
+  const nova = corPara(svcId, key);
+
+  featureRefs.forEach(f => {
+    if (f.serviceId !== svcId || f.key !== key) return;
+    if (!f.layer.setStyle) return;
+    if (f.layer.options && f.layer.options.fill){
+      // Poligono: a cor escolhida preenche e a borda sai de um tom mais escuro
+      const borda = shadeColor(nova, -20);
+      f.layer._baseColor = borda;
+      f.layer.setStyle({ color: borda, fillColor: nova });
+    } else {
+      // Linha: a cor vai direto no traco
+      f.layer._baseColor = nova;
+      f.layer.setStyle({ color: nova });
+    }
+  });
+
+  const marker = sectorLabelMarkers[chave];
+  if (marker){
+    const circulo = marker._icon && marker._icon.querySelector('.sector-label-circle');
+    if (circulo) circulo.style.background = nova;
+  }
+
+  renderSectorList();
+  renderLegend();
+  // applyFilters reaplica o destaque de "hoje" sobre a cor nova
+  if (state.mostrarHoje) applyFilters();
+}
+
+function renderSectorColor(){
+  const box = document.getElementById('sector-color');
+  if (!box) return;
+
+  // So faz sentido com exatamente um setor isolado: com varios, as cores
+  // procedurais e que diferenciam um do outro.
+  const umSo = state.setores.size === 1 && !!state.service;
+  box.classList.toggle('show', umSo);
+  if (!umSo) return;
+
+  const key = [...state.setores][0];
+  const code = key.split('|')[1];
+  const atual = corPara(state.service, key);
+
+  document.getElementById('sc-code').textContent = code;
+  document.getElementById('sc-picker').value = corParaHex(atual);
+
+  const reset = document.getElementById('sc-reset');
+  reset.style.display = coresCustom[state.service + '|' + key] ? '' : 'none';
+
+  const presets = document.getElementById('sc-presets');
+  if (presets.childElementCount === 0){
+    SC_PRESETS.forEach(c => {
+      const b = document.createElement('button');
+      b.style.background = c;
+      b.title = c;
+      b.addEventListener('click', () => {
+        if (state.setores.size !== 1) return;
+        aplicarCorSetor([...state.setores][0], c);
+        renderSectorColor();
+      });
+      presets.appendChild(b);
+    });
+  }
+}
+
 function renderSectorLabelsToggle(){
   const toggleEl = document.getElementById('sector-labels-toggle');
   const textEl = document.getElementById('sector-labels-toggle-text');
@@ -3041,6 +3206,7 @@ function renderAll(){
   applyFilters();
   updateDivisaStyles();
   renderSectorLabelsToggle();
+  renderSectorColor();
   renderActionButtons();
   updateEcopontosVisibility();
   updateEscolasVisibility();
