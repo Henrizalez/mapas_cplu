@@ -3412,17 +3412,58 @@ function prepararImpressao(){
 // precisa ser avisado e ter tempo de baixar os tiles do novo enquadramento,
 // senao a pagina sai com faixas em branco.
 let _imprimindo = false;
+let _vistaAntesDaImpressao = null;
+
+// Enquadra tudo o que esta visivel, para a folha sair centralizada sem o
+// usuario precisar arrastar/dar zoom no mapa antes de imprimir.
+function enquadrarParaImpressao(){
+  const bounds = L.latLngBounds([]);
+  let temAlgo = false;
+
+  // Geometrias do servico ativo que passaram pelo filtro
+  featureRefs.forEach(f => {
+    if (!f.layer._isVisible) return;
+    if (f.layer.getBounds) bounds.extend(f.layer.getBounds());
+    else if (f.layer.getLatLng) bounds.extend(f.layer.getLatLng());
+    temAlgo = true;
+  });
+
+  // Camadas auxiliares ligadas (ecopontos, escolas, pontos de apoio)
+  [ecopontoMarkers, escolaMarkers, apoioMarkers].forEach(lista => {
+    lista.forEach(({ marker }) => {
+      // Ecopontos/apoio usam a flag _isVisible; escolas entram e saem do mapa.
+      // A condicao cobre os dois esquemas.
+      if (!map.hasLayer(marker) || marker._isVisible === false) return;
+      bounds.extend(marker.getLatLng());
+      temAlgo = true;
+    });
+  });
+
+  if (!temAlgo || !bounds.isValid()) return false;
+
+  // Folga a direita para a legenda sobreposta nao cobrir o conteudo
+  map.fitBounds(bounds, {
+    paddingTopLeft: [24, 24],
+    paddingBottomRight: [180, 24],
+    animate: false,
+    maxZoom: 17
+  });
+  return true;
+}
 
 function entrarModoImpressao(){
   if (_imprimindo) return Promise.resolve();
   _imprimindo = true;
   prepararImpressao();
 
-  const centro = map.getCenter();
-  const zoom = map.getZoom();
+  _vistaAntesDaImpressao = { centro: map.getCenter(), zoom: map.getZoom() };
   document.body.classList.add('printing');
   map.invalidateSize({ animate: false });
-  map.setView(centro, zoom, { animate: false });
+  // O enquadramento vem DEPOIS do invalidateSize: so ai o Leaflet conhece
+  // as dimensoes reais do container no layout de impressao.
+  if (!enquadrarParaImpressao()){
+    map.setView(_vistaAntesDaImpressao.centro, _vistaAntesDaImpressao.zoom, { animate: false });
+  }
 
   // Espera os tiles do novo enquadramento carregarem. O evento certo e o
   // 'load' da camada de tiles (Map nao emite 'idle'). O teto de 1,5s evita
@@ -3444,11 +3485,13 @@ function entrarModoImpressao(){
 function sairModoImpressao(){
   if (!_imprimindo) return;
   _imprimindo = false;
-  const centro = map.getCenter();
-  const zoom = map.getZoom();
   document.body.classList.remove('printing');
   map.invalidateSize({ animate: false });
-  map.setView(centro, zoom, { animate: false });
+  // Devolve o usuario exatamente ao enquadramento que ele tinha antes
+  if (_vistaAntesDaImpressao){
+    map.setView(_vistaAntesDaImpressao.centro, _vistaAntesDaImpressao.zoom, { animate: false });
+    _vistaAntesDaImpressao = null;
+  }
 }
 
 document.getElementById('print-btn').addEventListener('click', () => {
@@ -3460,8 +3503,10 @@ window.addEventListener('beforeprint', () => {
   if (_imprimindo) return;
   _imprimindo = true;
   prepararImpressao();
+  _vistaAntesDaImpressao = { centro: map.getCenter(), zoom: map.getZoom() };
   document.body.classList.add('printing');
   map.invalidateSize({ animate: false });
+  enquadrarParaImpressao();
 });
 window.addEventListener('afterprint', sairModoImpressao);
 
