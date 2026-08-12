@@ -739,6 +739,12 @@
   }
 
   /* Botões flutuantes — estilo compartilhado */
+  .sector-row .sector-ruas{
+    display:block; width:100%; margin-top:3px;
+    font-size:10.5px; line-height:1.35; color: var(--ink-dim);
+    white-space:normal; word-break:break-word;
+  }
+  .sector-row.active .sector-ruas{ color: var(--ink); opacity:0.75; }
   .map-float-btn{
     position:absolute;
     left:16px;
@@ -772,6 +778,96 @@
 
   /* Posições dos botões flutuantes */
   #sector-labels-toggle{ bottom:24px; }
+  #export-btn{ bottom:154px; }
+  #print-btn{ bottom:200px; }
+
+  /* ---------- Impressao / PDF ----------
+     O layout de impressao e aplicado por uma classe no <body> (e nao so
+     dentro de @media print) porque o Leaflet precisa recalcular o tamanho
+     do container ANTES da pagina ser renderizada — senao os tiles saem
+     cortados ou em branco. A classe entra, chamamos invalidateSize(),
+     imprimimos e ela sai. */
+  #print-header{ display:none; }
+
+  body.printing{ background:#fff !important; overflow:visible !important; }
+  body.printing #sidebar,
+  body.printing #toggle-sidebar,
+  body.printing .map-float-btn,
+  body.printing #chat-fab,
+  body.printing #chat-panel,
+  body.printing #info-panel,
+  body.printing #sector-detail-backdrop,
+  body.printing #sector-detail-modal,
+  body.printing #agenda-dia-backdrop,
+  body.printing #agenda-dia-modal,
+  body.printing .leaflet-control-zoom,
+  body.printing .leaflet-control-attribution{ display:none !important; }
+
+  body.printing #main{
+    position:static !important; inset:auto !important;
+    width:100% !important; height:auto !important;
+    display:block !important; margin:0 !important; padding:0 !important;
+  }
+
+  /* Bloco unico centralizado: cabecalho + mapa com a mesma largura */
+  body.printing #map-wrap{
+    position:relative !important;
+    width:277mm !important; max-width:100% !important;
+    height:auto !important;
+    margin:0 auto !important; padding:0 !important;
+    display:block !important; overflow:visible !important;
+  }
+
+  body.printing #print-header{
+    display:block !important;
+    text-align:center;
+    padding:0 0 4mm 0;
+    color:#000 !important;
+  }
+  body.printing #print-header .ph-title{ font-size:15pt; font-weight:700; letter-spacing:0.01em; }
+  body.printing #print-header .ph-sub{ font-size:10.5pt; margin-top:1.5mm; color:#222 !important; }
+  body.printing #print-header .ph-meta{ font-size:8pt; margin-top:2mm; color:#555 !important; }
+
+  body.printing #map{
+    position:relative !important;
+    width:100% !important; height:170mm !important;
+    border:1px solid #999; border-radius:0;
+  }
+
+  /* Legenda sobreposta ao mapa, tema claro para impressao */
+  body.printing #legend{
+    position:absolute !important;
+    top:6mm !important; right:6mm !important;
+    z-index:1200 !important;
+    display:block !important;
+    background:rgba(255,255,255,0.96) !important;
+    border:1px solid #888 !important;
+    border-radius:2mm !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    box-shadow:none !important;
+    max-width:62mm !important;
+  }
+  body.printing #legend .legend-head{
+    color:#000 !important; border-bottom:1px solid #bbb !important;
+    padding:2mm 3mm !important; font-size:7.5pt !important; cursor:default;
+  }
+  body.printing #legend-arrow{ display:none !important; }
+  /* Ignora o estado colapsado: na impressao a legenda sai sempre aberta */
+  body.printing #legend .legend-body,
+  body.printing #legend.collapsed .legend-body{
+    display:block !important;
+    max-height:140mm !important; overflow:visible !important;
+    padding:2mm 3mm !important;
+  }
+  body.printing .legend-item{ color:#111 !important; font-size:7.5pt !important; padding:0.6mm 0 !important; }
+  body.printing .legend-item .sw{ border:0.3mm solid #666; }
+
+  @media print {
+    @page { size: A4 landscape; margin: 10mm; }
+    html, body{ background:#fff !important; }
+    /* Garante que cores de setor e legenda saiam no papel */
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  }
   #agenda-btn{ bottom:62px; }
 
   /* Botão: Execução de hoje */
@@ -1114,6 +1210,16 @@
       font-size:11px;
       padding:7px 10px;
     }
+    #export-btn{
+      left:16px; bottom:222px;
+      font-size:11px;
+      padding:7px 10px;
+    }
+    #print-btn{
+      left:16px; bottom:268px;
+      font-size:11px;
+      padding:7px 10px;
+    }
     /* Painel de info (hover): por padrão acima do toggle de rótulos;
        quando este último está visível (.shifted-up), sobe mais ainda */
     #info-panel{ left:16px; right:16px; bottom:130px; max-width:none; }
@@ -1166,11 +1272,24 @@
       </div>
       <div id="addr-results"></div>
     </div>
+    <div id="print-header">
+      <div class="ph-title">CPLU — Mapa Operacional de Limpeza Urbana</div>
+      <div class="ph-sub" id="ph-sub"></div>
+      <div class="ph-meta" id="ph-meta"></div>
+    </div>
     <div id="map"></div>
     <div id="info-panel"></div>
     <div id="sector-labels-toggle" class="map-float-btn" title="Mostrar/ocultar números dos setores">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="sector-labels-toggle-text">Números dos setores</span>
+    </div>
+    <div id="export-btn" class="map-float-btn" title="Exportar a visão filtrada em CSV">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Exportar CSV</span>
+    </div>
+    <div id="print-btn" class="map-float-btn" title="Imprimir ou salvar em PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span>Imprimir</span>
     </div>
     <div id="agenda-btn" class="map-float-btn" title="Agenda do dia">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><rect x="7" y="14" width="3" height="3" rx="0.5" fill="currentColor" stroke="none"/></svg>
@@ -1596,7 +1715,7 @@ function boundsFor(routes){
 const map = L.map('map', { zoomControl: false, attributionControl: true }).fitBounds(boundsFor(ROUTES), { padding: [30, 30] });
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+const baseTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 19
 }).addTo(map);
@@ -2455,7 +2574,7 @@ function renderFiltersArea(){
       </div>
       <div class="search-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="sector-search" placeholder="Buscar setor...">
+        <input type="text" id="sector-search" placeholder="Buscar setor ou logradouro...">
       </div>
       <div id="sector-list"></div>
     </div>
@@ -2527,9 +2646,29 @@ function renderSectorList(){
   const multiSub = state.subs.size > 1;
   const svc = serviceById[state.service];
   const scopeKeys = [...new Set(routesInScopeFiltered().map(sectorKey))].sort(compareByFinalNumber);
+  // Indice rua -> setores do escopo atual (permite buscar por logradouro,
+  // nao so pelo codigo do setor). O usuario de campo pensa em "Av Cupece",
+  // nao em "AD30203MZ0002".
+  const ruasPorSetor = {};
+  if (term){
+    routesInScopeFiltered().forEach(r => {
+      if (!r.rua) return;
+      const k = sectorKey(r);
+      if (!ruasPorSetor[k]) ruasPorSetor[k] = new Set();
+      ruasPorSetor[k].add(r.rua);
+    });
+  }
+  const matchRuas = {};
   const filtered = scopeKeys.filter(key => {
+    if (!term) return true;
     const code = key.split('|')[1];
-    return !term || code.toUpperCase().includes(term);
+    if (code.toUpperCase().includes(term)) return true;
+    const ruas = ruasPorSetor[key];
+    if (!ruas) return false;
+    const hits = [...ruas].filter(r => r.toUpperCase().includes(term));
+    if (hits.length === 0) return false;
+    matchRuas[key] = hits;
+    return true;
   });
 
   if (setorCountLabel){
@@ -2542,7 +2681,11 @@ function renderSectorList(){
     const isActive = state.setores.has(key);
     row.className = 'sector-row' + (isActive ? ' active' : '');
     const label = multiSub ? `${sub} · ${code}` : code;
-    row.innerHTML = `<span class="swatch" style="background:${corPara(svc.id, key)}"></span><span class="code">${label}</span>`;
+    const hits = matchRuas[key];
+    const ruasHtml = hits
+      ? `<span class="sector-ruas">${escapeHtml(hits.slice(0, 3).join(' · '))}${hits.length > 3 ? ` +${hits.length - 3}` : ''}</span>`
+      : '';
+    row.innerHTML = `<span class="swatch" style="background:${corPara(svc.id, key)}"></span><span class="code">${label}</span>${ruasHtml}`;
     row.addEventListener('click', () => toggleSectorSelection(key));
     sectorListEl.appendChild(row);
   });
@@ -2783,6 +2926,17 @@ document.getElementById('legend-toggle').addEventListener('click', () => {
 });
 
 // ---------- Toggle de números dos setores ----------
+// Exportar/Compartilhar so fazem sentido com um servico ativo.
+// Imprimir aparece assim que ha subprefeitura selecionada.
+function renderActionButtons(){
+  const temServico = !!state.service && state.subs.size > 0;
+  const temSub = state.subs.size > 0;
+  const exp = document.getElementById('export-btn');
+  const prt = document.getElementById('print-btn');
+  if (exp) exp.classList.toggle('show', temServico);
+  if (prt) prt.classList.toggle('show', temSub);
+}
+
 function renderSectorLabelsToggle(){
   const toggleEl = document.getElementById('sector-labels-toggle');
   const textEl = document.getElementById('sector-labels-toggle-text');
@@ -2887,12 +3041,276 @@ function renderAll(){
   applyFilters();
   updateDivisaStyles();
   renderSectorLabelsToggle();
+  renderActionButtons();
   updateEcopontosVisibility();
   updateEscolasVisibility();
   updateApoioVisibility();
 }
 
+// ==========================================================================
+// Exportar CSV | Link compartilhavel | Impressao
+// ==========================================================================
+
+// Distancia em km de uma polilinha (haversine), usada no CSV
+function _kmLinha(coords){
+  const R = 6371, tr = Math.PI / 180;
+  let km = 0;
+  for (let i = 0; i < coords.length - 1; i++){
+    const a = coords[i], b = coords[i + 1];
+    const dLat = (b[0] - a[0]) * tr, dLon = (b[1] - a[1]) * tr;
+    const h = Math.sin(dLat / 2) ** 2 +
+              Math.cos(a[0] * tr) * Math.cos(b[0] * tr) * Math.sin(dLon / 2) ** 2;
+    km += R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+  return km;
+}
+
+// Area aproximada de um poligono em m2 (projecao local equiretangular)
+function _areaPoligono(coords){
+  if (!coords || coords.length < 3) return 0;
+  const tr = Math.PI / 180;
+  const midLat = coords.reduce((s, c) => s + c[0], 0) / coords.length;
+  const mLat = 111320, mLon = 111320 * Math.cos(midLat * tr);
+  let a = 0;
+  for (let i = 0, j = coords.length - 1; i < coords.length; j = i++){
+    a += (coords[j][1] * mLon + coords[i][1] * mLon) * (coords[j][0] * mLat - coords[i][0] * mLat);
+  }
+  return Math.abs(a / 2);
+}
+
+const DIAS_MULT = {
+  'Diária': 26, 'Alternada SQS': 13, 'Alternada TQS': 13,
+  'Bissemanal QS': 8.66, 'Bissemanal TS': 8.66, 'Bissemanal SQ': 8.66
+};
+
+// Exporta exatamente o que esta visivel no filtro atual.
+// Separador ";" e decimal "," para abrir direto no Excel pt-BR.
+function exportarCSV(){
+  if (!state.service || state.subs.size === 0){
+    alert('Selecione uma subprefeitura e um serviço antes de exportar.');
+    return;
+  }
+  const svc = serviceById[state.service];
+  const linha = svc.geometryType === 'line';
+  const visiveis = featureRefs.filter(f => f.serviceId === state.service && f.layer._isVisible);
+
+  if (visiveis.length === 0){
+    alert('Nenhum registro visível no filtro atual.');
+    return;
+  }
+
+  const cab = linha
+    ? ['SUB','Subprefeitura','Servico','Setor','Logradouro','Frequencia','Dias','Km_Eixo','Km_Sarjeta','Km_Mes_Eixo','Datas']
+    : ['SUB','Subprefeitura','Servico','Setor','Nome','Frequencia','Dias','Area_m2','Area_ha','Datas'];
+
+  const num = v => String(v.toFixed(2)).replace('.', ',');
+  const esc = v => {
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+
+  const linhas = [cab.join(';')];
+  let totKm = 0, totKmMes = 0, totArea = 0;
+
+  visiveis.forEach(({ route }) => {
+    const datas = Array.isArray(route.datas) ? route.datas.join(' | ') : '';
+    if (linha){
+      const km = _kmLinha(route.coords);
+      const kmMes = km * (DIAS_MULT[route.freq] || 0);
+      totKm += km; totKmMes += kmMes;
+      linhas.push([route.sub, nomeSub(route.sub), svc.nome, route.setor, route.rua || '',
+                   route.freq || '', route.dias || '', num(km), num(km * 2), num(kmMes), datas].map(esc).join(';'));
+    } else {
+      const area = _areaPoligono(route.coords);
+      totArea += area;
+      linhas.push([route.sub, nomeSub(route.sub), svc.nome, route.setor, route.nome || '',
+                   route.freq || '', route.dias || '', num(area), num(area / 10000), datas].map(esc).join(';'));
+    }
+  });
+
+  // Linha de total, para conferencia rapida na planilha
+  linhas.push('');
+  linhas.push(linha
+    ? ['TOTAL','','','','','','', num(totKm), num(totKm * 2), num(totKmMes), ''].map(esc).join(';')
+    : ['TOTAL','','','','','','', num(totArea), num(totArea / 10000), ''].map(esc).join(';'));
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const subsTxt = [...state.subs].sort().join('-');
+  const nomeArq = `CPLU_${svc.nome.replace(/[^\w]+/g, '_')}_${subsTxt}_${stamp}.csv`;
+
+  // BOM para o Excel reconhecer UTF-8
+  const blob = new Blob(['\ufeff' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nomeArq;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------- Estado na URL (link compartilhavel) ----------
+let _restaurandoURL = false;
+
+function estadoParaURL(){
+  const p = new URLSearchParams();
+  if (state.subs.size) p.set('subs', [...state.subs].sort().join(','));
+  if (state.service) p.set('svc', state.service);
+  if (state.freq.size) p.set('freq', [...state.freq].join('~'));
+  if (state.dias.size) p.set('dias', [...state.dias].join('~'));
+  if (state.setores.size) p.set('set', [...state.setores].join('~'));
+  if (state.extra.size) p.set('ext', [...state.extra].join('~'));
+  if (state.mostrarHoje) p.set('hoje', '1');
+  if (!state.showSectorLabels) p.set('lbl', '0');
+  if (state.showEcopontos) p.set('eco', '1');
+  if (state.showEscolas) p.set('esc', '1');
+  if (state.showApoio) p.set('apo', '1');
+  const c = map.getCenter();
+  p.set('v', `${c.lat.toFixed(5)},${c.lng.toFixed(5)},${map.getZoom()}`);
+  return p.toString();
+}
+
+function atualizarURL(){
+  if (_restaurandoURL) return;
+  const qs = estadoParaURL();
+  history.replaceState(null, '', qs ? '#' + qs : location.pathname + location.search);
+}
+
+function restaurarDaURL(){
+  const raw = location.hash.replace(/^#/, '');
+  if (!raw) return false;
+  const p = new URLSearchParams(raw);
+  _restaurandoURL = true;
+
+  const setDe = (chave, alvo, sep) => {
+    const v = p.get(chave);
+    if (v) v.split(sep).filter(Boolean).forEach(x => alvo.add(x));
+  };
+
+  if (p.get('subs')) setDe('subs', state.subs, ',');
+  const svc = p.get('svc');
+  if (svc && serviceById[svc]) state.service = svc;
+  setDe('freq', state.freq, '~');
+  setDe('dias', state.dias, '~');
+  setDe('set',  state.setores, '~');
+  setDe('ext',  state.extra, '~');
+  state.mostrarHoje      = p.get('hoje') === '1';
+  state.showSectorLabels = p.get('lbl')  !== '0';
+  state.showEcopontos    = p.get('eco')  === '1';
+  state.showEscolas      = p.get('esc')  === '1';
+  state.showApoio        = p.get('apo')  === '1';
+
+  _restaurandoURL = false;
+  renderAll();
+
+  const v = p.get('v');
+  if (v){
+    const [lat, lon, z] = v.split(',').map(Number);
+    if (!isNaN(lat) && !isNaN(lon) && !isNaN(z)) map.setView([lat, lon], z);
+  }
+
+  // Botoes que so aparecem com sub selecionada
+  if (state.subs.size > 0){
+    const ag = document.getElementById('agenda-btn');
+    const hj = document.getElementById('hoje-btn');
+    if (ag) ag.classList.add('show');
+    if (hj) hj.classList.add('show');
+    if (state.mostrarHoje && hj) hj.classList.add('active');
+  }
+  return true;
+}
+
+// ---------- Impressao ----------
+function prepararImpressao(){
+  const svc = state.service ? serviceById[state.service].nome : 'Nenhum serviço selecionado';
+  const subs = [...state.subs].sort().map(s => `${s} — ${nomeSub(s)}`).join(' · ') || 'Nenhuma subprefeitura';
+  const visiveis = state.service
+    ? featureRefs.filter(f => f.serviceId === state.service && f.layer._isVisible).length
+    : 0;
+
+  const filtros = [];
+  if (state.freq.size)    filtros.push('Frequência: ' + [...state.freq].join(', '));
+  if (state.dias.size)    filtros.push('Dias: ' + [...state.dias].join(', '));
+  if (state.setores.size) filtros.push(`${state.setores.size} setor(es) isolado(s)`);
+  if (state.extra.size)   filtros.push(`${state.extra.size} item(ns) selecionado(s)`);
+  if (state.mostrarHoje)  filtros.push('Destaque: execução de hoje');
+
+  const sub = document.getElementById('ph-sub');
+  const meta = document.getElementById('ph-meta');
+  if (sub)  sub.textContent = `${svc} — ${subs}`;
+  if (meta) meta.textContent =
+    `${visiveis} registro(s) no filtro atual` +
+    (filtros.length ? ' · ' + filtros.join(' · ') : '') +
+    ' · Emitido em ' + new Date().toLocaleString('pt-BR');
+}
+
+// O container do mapa muda de tamanho no layout de impressao. O Leaflet
+// precisa ser avisado e ter tempo de baixar os tiles do novo enquadramento,
+// senao a pagina sai com faixas em branco.
+let _imprimindo = false;
+
+function entrarModoImpressao(){
+  if (_imprimindo) return Promise.resolve();
+  _imprimindo = true;
+  prepararImpressao();
+
+  const centro = map.getCenter();
+  const zoom = map.getZoom();
+  document.body.classList.add('printing');
+  map.invalidateSize({ animate: false });
+  map.setView(centro, zoom, { animate: false });
+
+  // Espera os tiles do novo enquadramento carregarem. O evento certo e o
+  // 'load' da camada de tiles (Map nao emite 'idle'). O teto de 1,5s evita
+  // travar a impressao se algum tile falhar.
+  return new Promise(resolve => {
+    let pronto = false;
+    const fim = () => {
+      if (pronto) return;
+      pronto = true;
+      baseTileLayer.off('load', fim);
+      clearTimeout(teto);
+      resolve();
+    };
+    const teto = setTimeout(fim, 1500);
+    baseTileLayer.on('load', fim);
+  });
+}
+
+function sairModoImpressao(){
+  if (!_imprimindo) return;
+  _imprimindo = false;
+  const centro = map.getCenter();
+  const zoom = map.getZoom();
+  document.body.classList.remove('printing');
+  map.invalidateSize({ animate: false });
+  map.setView(centro, zoom, { animate: false });
+}
+
+document.getElementById('print-btn').addEventListener('click', () => {
+  entrarModoImpressao().then(() => window.print());
+});
+
+// Ctrl+P: nao da pra esperar o carregamento, mas ao menos ajusta o layout
+window.addEventListener('beforeprint', () => {
+  if (_imprimindo) return;
+  _imprimindo = true;
+  prepararImpressao();
+  document.body.classList.add('printing');
+  map.invalidateSize({ animate: false });
+});
+window.addEventListener('afterprint', sairModoImpressao);
+
+document.getElementById('export-btn').addEventListener('click', exportarCSV);
+
+// Mantem a URL sincronizada com o estado
+const _renderAllOriginal = renderAll;
+renderAll = function(){
+  _renderAllOriginal.apply(this, arguments);
+  atualizarURL();
+};
+map.on('moveend zoomend', atualizarURL);
+
 renderAll();
+restaurarDaURL();
 
 // ---------- Encontrar o trecho visível mais próximo de um ponto ----------
 // Usado pelo marcador de busca de endereço: ao clicar, mostra os dados do
@@ -3368,10 +3786,26 @@ var cpluChat = (function() {
       var km = lineKm(r.coords);
       var mult = FREQ_MULT[r.freq] || 0;
       s.trechos++; s.setores[r.setor]=1; s.km += km; s.kmMes += km*mult; s.ruas[r.rua]=1;
+      var oc = idxRua(r.rua, r.setor, r.sub, 'Varri\u00E7\u00E3o Manual', r.freq, r.dias);
+      if (oc) { oc.trechos++; oc.km += km; }
       if (!s.tipos[tipo]) s.tipos[tipo] = {trechos:0, setores:{}, km:0, kmMes:0};
       var t = s.tipos[tipo]; t.trechos++; t.setores[r.setor]=1; t.km += km; t.kmMes += km*mult;
       varr.total.trechos++; varr.total.setores[r.setor]=1; varr.total.km += km; varr.total.kmMes += km*mult;
     });
+
+    // Indice de logradouros -> setores (todos os servicos de linha).
+    // Responde "que dia passa a varricao na Av X?".
+    var ruaIdx = {};
+    function idxRua(rua, setor, sub, svcNome, freq, dias, datas){
+      if (!rua) return;
+      var k = normalize(rua);
+      if (!ruaIdx[k]) ruaIdx[k] = {nome: rua, ocorr: {}};
+      var ok = svcNome + '|' + sub + '|' + setor;
+      if (!ruaIdx[k].ocorr[ok]) {
+        ruaIdx[k].ocorr[ok] = {svc: svcNome, sub: sub, setor: setor, freq: freq||'', dias: dias||'', datas: datas||[], trechos: 0, km: 0};
+      }
+      return ruaIdx[k].ocorr[ok];
+    }
 
     // Varricao Mecanizada
     var mec = {};
@@ -3382,6 +3816,8 @@ var cpluChat = (function() {
       s.trechos++; s.setores[r.setor]=1; s.km += km;
       s.kmMes += km * (FREQ_MULT[r.freq]||0);
       if (r.dias) s.dias[r.dias]=1;
+      var oc = idxRua(r.rua, r.setor, r.sub, 'Varri\u00E7\u00E3o Mecanizada', r.freq, r.dias);
+      if (oc) { oc.trechos++; oc.km += km; }
     });
 
     var feiras = {AD:[], IP:[], JA:[], all:[]};
@@ -3395,16 +3831,22 @@ var cpluChat = (function() {
     subs.forEach(function(s){ go[s] = {trechos:0, setores:{}, km:0, datas:[]}; });
     if (typeof GRANDES_OBJETOS !== 'undefined') GRANDES_OBJETOS.forEach(function(g) {
       var s = go[g.sub]; if (!s) return;
-      s.trechos++; s.setores[g.setor]=1; s.km += lineKm(g.coords);
+      var gkm = lineKm(g.coords);
+      s.trechos++; s.setores[g.setor]=1; s.km += gkm;
       if (g.datas) g.datas.forEach(function(d){ if (s.datas.indexOf(d)===-1) s.datas.push(d); });
+      var oc = idxRua(g.rua, g.setor, g.sub, 'Grandes Objetos (Cata-Bagulho)', g.freq, '', g.datas);
+      if (oc) { oc.trechos++; oc.km += gkm; }
     });
 
     var mut = {};
     subs.forEach(function(s){ mut[s] = {trechos:0, setores:{}, km:0, datas:[]}; });
     if (typeof MUTIRAO !== 'undefined') MUTIRAO.forEach(function(m) {
       var s = mut[m.sub]; if (!s) return;
-      s.trechos++; s.setores[m.setor]=1; s.km += lineKm(m.coords);
+      var mkm = lineKm(m.coords);
+      s.trechos++; s.setores[m.setor]=1; s.km += mkm;
       if (m.datas) m.datas.forEach(function(d){ if (s.datas.indexOf(d)===-1) s.datas.push(d); });
+      var oc = idxRua(m.rua, m.setor, m.sub, 'Mutir\u00E3o', m.freq, '', m.datas);
+      if (oc) { oc.trechos++; oc.km += mkm; }
     });
 
     var leep = {AD:[], IP:[], JA:[], all:[]};
@@ -3485,7 +3927,7 @@ var cpluChat = (function() {
       if (n.datas) n.datas.forEach(function(d){ if (e.datas.indexOf(d)===-1) e.datas.push(d); });
     });
 
-    stats = {varr:varr, mec:mec, feiras:feiras, go:go, mut:mut, leep:leep, pracas:pracas, nh:nh, pa:pa, setorIdx:setorIdx};
+    stats = {varr:varr, mec:mec, ruaIdx:ruaIdx, feiras:feiras, go:go, mut:mut, leep:leep, pracas:pracas, nh:nh, pa:pa, setorIdx:setorIdx};
   }
 
   function parseSub(q) {
@@ -4042,6 +4484,91 @@ var cpluChat = (function() {
     return resp;
   }
 
+  // ============ BUSCA POR LOGRADOURO ============
+  // Os dados guardam o tipo de via abreviado ("AV DO ESTADO", "R BOM PASTOR").
+  // O usuario escreve por extenso, entao cada forma aceita a outra.
+  var VIA_ABREV = {
+    avenida:'av', rua:'r', praca:'pc', travessa:'tv', alameda:'al',
+    estrada:'estr', viaduto:'vd', rodovia:'rod', largo:'lgo',
+    acesso:'ac', marginal:'mg', complexo:'cv', parque:'pq', jardim:'jd'
+  };
+  var TIPO_VIA = {};
+  Object.keys(VIA_ABREV).forEach(function(k){ TIPO_VIA[k] = 1; TIPO_VIA[VIA_ABREV[k]] = 1; });
+  ['via','v','av','r','pc','tv','al','vd','ac'].forEach(function(k){ TIPO_VIA[k] = 1; });
+
+  function handleRua(q, sub) {
+    var n = normalize(q);
+    var stop = ['que','qual','quais','quando','dia','dias','passa','passam','a','o','e','de','da','do','das','dos','em','na','no','pela','pelo','varricao','limpeza','servico','tem','sobre','me','fale','mostre','informacao','info','atende','coleta','horario','frequencia'];
+    var words = n.split(/[^a-z0-9]+/).filter(function(w){ return w.length > 1 && stop.indexOf(w) === -1; });
+    if (words.length === 0) return null;
+
+    // Cada termo vira uma lista de formas aceitas (por extenso + abreviada)
+    function variantes(w) {
+      var v = [w];
+      if (VIA_ABREV[w]) v.push(VIA_ABREV[w]);
+      Object.keys(VIA_ABREV).forEach(function(full){ if (VIA_ABREV[full] === w) v.push(full); });
+      return v;
+    }
+    function casa(k, w) {
+      return variantes(w).some(function(x){
+        return k.indexOf(x) > -1 && new RegExp('(^|[^a-z])' + x).test(k);
+      });
+    }
+
+    // "Avenida" sozinho nao pode casar com todas as avenidas: tipo de via
+    // conta ponto, mas quem define o match sao os termos do nome proprio.
+    var core = words.filter(function(w){ return !TIPO_VIA[w]; });
+    var tipos = words.filter(function(w){ return TIPO_VIA[w]; });
+    if (core.length === 0) return null;
+    var exigidos = core.length > 2 ? core.length - 1 : core.length;
+
+    var matches = [];
+    for (var k in stats.ruaIdx) {
+      var entry = stats.ruaIdx[k];
+      var hitsCore = 0, hitsTipo = 0;
+      core.forEach(function(w){ if (casa(k, w)) hitsCore++; });
+      if (hitsCore < exigidos) continue;
+      tipos.forEach(function(w){ if (casa(k, w)) hitsTipo++; });
+      var score = (hitsCore + hitsTipo) / (core.length + tipos.length);
+      matches.push({entry: entry, score: score, len: k.length});
+    }
+    if (matches.length === 0) return null;
+    // Melhor pontuacao; empate desempata pelo nome mais curto (mais especifico)
+    matches.sort(function(a,b){ return b.score - a.score || a.len - b.len; });
+
+    var top = matches.slice(0, 4);
+    var resp = '';
+    top.forEach(function(m) {
+      var ocorrs = [];
+      for (var ok in m.entry.ocorr) {
+        var o = m.entry.ocorr[ok];
+        if (sub && o.sub !== sub) continue;
+        ocorrs.push(o);
+      }
+      if (ocorrs.length === 0) return;
+      ocorrs.sort(function(a,b){ return b.km - a.km; });
+
+      resp += '<div class="tbl-section"><b>' + m.entry.nome + '</b> \u2014 ' + ocorrs.length + ' ocorr\u00EAncia(s)</div>';
+      var rows = [];
+      var extras = ocorrs.length > 12 ? ocorrs.length - 12 : 0;
+      ocorrs.slice(0, 12).forEach(function(o) {
+        var quando = o.dias ? o.dias.replace('Alternada de ','').replace('Bissemanal de ','') : '';
+        if (!quando && o.datas && o.datas.length) {
+          var prox = nextDates(o.datas, 1);
+          quando = prox.length ? 'Pr\u00F3x: ' + fmtDate(prox[0]) : (o.freq || '');
+        }
+        if (!quando) quando = o.freq || '\u2014';
+        rows.push([o.svc, o.sub, o.setor, quando, fmt(o.km) + ' km']);
+      });
+      resp += tbl(['Servi\u00E7o','SUB','Setor','Quando','Extens\u00E3o'], rows);
+      if (extras) resp += '<small>+' + extras + ' outro(s) trecho(s) desta via.</small>';
+    });
+
+    if (!resp) return null;
+    if (matches.length > top.length) resp += '<small>Outros ' + (matches.length - top.length) + ' logradouros tamb\u00E9m batem. Refine o nome.</small>';
+    return resp;
+  }
+
   // ============ BUSCA POR SETOR ============
   var SVC_TO_CODE = {varricao: ['VJ','VL','VC'], mecanizada: ['MZ'], go: ['GO'], mutirao: ['MT'], feiras: ['LF'], leep: ['LE'], pracas: ['VP'], nh: ['NH']};
 
@@ -4133,6 +4660,7 @@ var cpluChat = (function() {
         ['LEEP', 'lavagem JA \u00B7 leep de segunda'],
         ['N\u00FAcleos', 'n\u00FAcleos IP \u00B7 pr\u00F3xima limpeza comunidades'],
         ['Agenda', 'o que tem hoje \u00B7 feiras amanh\u00E3'],
+        ['Logradouro', 'Av Cupece \u00B7 que dia passa na R Bom Pastor'],
         ['Busca', 'Pra\u00E7a Joaniza \u00B7 Comunidade Heli\u00F3polis'],
         ['Setor', 'setor 33 varri\u00E7\u00E3o IP \u00B7 setor 02 mutir\u00E3o'],
         ['Resumo', 'resumo geral \u00B7 resumo IP']
@@ -4180,6 +4708,10 @@ var cpluChat = (function() {
       if (rk) return rk;
     }
 
+    // Busca por logradouro (13k+ trechos com nome de rua)
+    var ruaResult = handleRua(q, sub);
+    if (ruaResult) return ruaResult;
+
     // Busca por nome (feiras, pracas, leep, nucleos, pontos de apoio)
     var nameResult = searchByName(q);
     if (nameResult) return nameResult;
@@ -4222,6 +4754,7 @@ var cpluChat = (function() {
       '<i>\u2022 Varri\u00E7\u00E3o no Ipiranga</i> \u00B7 <i>km sarjeta AD</i><br>' +
       '<i>\u2022 \u00C1rea das feiras de AD</i> \u00B7 <i>maior feira</i><br>' +
       '<i>\u2022 O que tem hoje?</i> \u00B7 <i>feiras amanh\u00E3</i><br>' +
+      '<i>\u2022 Que dia passa na Av Cupece?</i><br>' +
       '<i>\u2022 Pra\u00E7a Joaniza</i> (busca por nome)<br>' +
       '<i>\u2022 Pr\u00F3ximo mutir\u00E3o em Ademar</i><br><br>' +
       'Digite <b>ajuda</b> para ver tudo.', 'bot');
