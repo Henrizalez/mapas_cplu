@@ -865,7 +865,11 @@
     position:relative !important;
     width:100% !important; height:170mm !important;
     border:1px solid #999; border-radius:0;
+    /* Sem isto, um tile que nao carregue deixa o fundo escuro do tema
+       ocupando a folha inteira */
+    background:#fff !important;
   }
+  body.printing .leaflet-container{ background:#fff !important; }
 
   /* Legenda sobreposta ao mapa, tema claro para impressao */
   body.printing #legend{
@@ -894,6 +898,31 @@
   }
   body.printing .legend-item{ color:#111 !important; font-size:7.5pt !important; padding:0.6mm 0 !important; }
   body.printing .legend-item .sw{ border:0.3mm solid #666; }
+
+  /* Com muitos setores a legenda sobreposta cobriria o mapa e estouraria a
+     altura da folha. Nesse caso ela desce para baixo do mapa, em colunas,
+     e pode fluir para uma segunda pagina sem cortar nenhum item. */
+  body.printing.legend-below #map{ height:118mm !important; }
+  body.printing.legend-below #legend{
+    position:static !important;
+    width:100% !important; max-width:100% !important;
+    margin:4mm 0 0 0 !important;
+    break-inside:auto; page-break-inside:auto;
+  }
+  body.printing.legend-below #legend .legend-head{
+    font-size:8pt !important; padding:1.5mm 2mm !important;
+  }
+  body.printing.legend-below #legend .legend-body,
+  body.printing.legend-below #legend.collapsed .legend-body{
+    column-gap:5mm; column-rule:1px solid #ddd;
+    max-height:none !important; overflow:visible !important;
+    padding:2mm !important;
+  }
+  body.printing.legend-below .legend-item{
+    break-inside:avoid; page-break-inside:avoid;
+    font-size:6.8pt !important; padding:0.35mm 0 !important;
+  }
+  body.printing.legend-below .legend-item .sw{ width:6px !important; height:6px !important; }
 
   @media print {
     @page { size: A4 landscape; margin: 10mm; }
@@ -3399,6 +3428,19 @@ function prepararImpressao(){
   if (state.extra.size)   filtros.push(`${state.extra.size} item(ns) selecionado(s)`);
   if (state.mostrarHoje)  filtros.push('Destaque: execução de hoje');
 
+  // Legenda: sobreposta quando cabe; abaixo do mapa (em colunas) quando ha
+  // setores demais para o canto do mapa comportar.
+  const legendBody = document.getElementById('legend-body');
+  const nItens = legendBody ? legendBody.querySelectorAll('.legend-item').length : 0;
+  const abaixo = nItens > 20;
+  document.body.classList.toggle('legend-below', abaixo);
+  if (legendBody){
+    // ~14 itens por coluna na faixa inferior; entre 3 e 9 colunas
+    legendBody.style.columnCount = abaixo
+      ? String(Math.min(9, Math.max(3, Math.ceil(nItens / 14))))
+      : '';
+  }
+
   const sub = document.getElementById('ph-sub');
   const meta = document.getElementById('ph-meta');
   if (sub)  sub.textContent = `${svc} — ${subs}`;
@@ -3441,10 +3483,12 @@ function enquadrarParaImpressao(){
 
   if (!temAlgo || !bounds.isValid()) return false;
 
-  // Folga a direita para a legenda sobreposta nao cobrir o conteudo
+  // Se a legenda desceu para o rodape, o canto do mapa esta livre e nao
+  // precisa da folga extra a direita.
+  const legendaSobreposta = !document.body.classList.contains('legend-below');
   map.fitBounds(bounds, {
     paddingTopLeft: [24, 24],
-    paddingBottomRight: [180, 24],
+    paddingBottomRight: [legendaSobreposta ? 180 : 24, 24],
     animate: false,
     maxZoom: 17
   });
@@ -3465,27 +3509,39 @@ function entrarModoImpressao(){
     map.setView(_vistaAntesDaImpressao.centro, _vistaAntesDaImpressao.zoom, { animate: false });
   }
 
-  // Espera os tiles do novo enquadramento carregarem. O evento certo e o
-  // 'load' da camada de tiles (Map nao emite 'idle'). O teto de 1,5s evita
-  // travar a impressao se algum tile falhar.
+  // Espera os tiles do novo enquadramento. Sao DUAS mudancas de layout
+  // (classe de impressao + reenquadramento), entao o 'load' de um ciclo
+  // anterior pode chegar antes do ciclo novo comecar. Por isso so passamos
+  // a escutar depois que o movimento assenta, e ainda damos um respiro para
+  // os tiles serem pintados antes de abrir a caixa de impressao.
   return new Promise(resolve => {
     let pronto = false;
-    const fim = () => {
+    let teto;
+    const concluir = () => {
       if (pronto) return;
       pronto = true;
-      baseTileLayer.off('load', fim);
+      baseTileLayer.off('load', concluir);
       clearTimeout(teto);
-      resolve();
+      setTimeout(resolve, 250);   // respiro para a pintura
     };
-    const teto = setTimeout(fim, 1500);
-    baseTileLayer.on('load', fim);
+    teto = setTimeout(concluir, 4000);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // _loading indica que ha tiles pendentes neste ciclo
+        if (!baseTileLayer._loading){ concluir(); return; }
+        baseTileLayer.on('load', concluir);
+      });
+    });
   });
 }
 
 function sairModoImpressao(){
   if (!_imprimindo) return;
   _imprimindo = false;
-  document.body.classList.remove('printing');
+  document.body.classList.remove('printing', 'legend-below');
+  const lb = document.getElementById('legend-body');
+  if (lb) lb.style.columnCount = '';
   map.invalidateSize({ animate: false });
   // Devolve o usuario exatamente ao enquadramento que ele tinha antes
   if (_vistaAntesDaImpressao){
