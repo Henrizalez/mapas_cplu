@@ -4261,6 +4261,21 @@ var cpluChat = (function() {
   function computeStats() {
     var subs = ['AD','IP','JA'];
 
+    // Indice de logradouros -> setores (todos os servicos de linha).
+    // Responde "que dia passa a varricao na Av X?".
+    var ruaIdx = {};
+    function idxRua(rua, setor, sub, svcNome, freq, dias, datas){
+      if (!rua) return;
+      var k = normalize(rua);
+      if (!ruaIdx[k]) ruaIdx[k] = {nome: rua, ocorr: {}};
+      var ok = svcNome + '|' + sub + '|' + setor;
+      if (!ruaIdx[k].ocorr[ok]) {
+        ruaIdx[k].ocorr[ok] = {svc: svcNome, sub: sub, setor: setor, freq: freq||'', dias: dias||'', datas: datas||[], trechos: 0, km: 0};
+      }
+      return ruaIdx[k].ocorr[ok];
+    }
+
+
     var varr = {};
     subs.forEach(function(s){ varr[s] = {trechos:0, setores:{}, km:0, kmMes:0, tipos:{}, ruas:{}}; });
     varr.total = {trechos:0, setores:{}, km:0, kmMes:0};
@@ -4276,20 +4291,6 @@ var cpluChat = (function() {
       var t = s.tipos[tipo]; t.trechos++; t.setores[r.setor]=1; t.km += km; t.kmMes += km*mult;
       varr.total.trechos++; varr.total.setores[r.setor]=1; varr.total.km += km; varr.total.kmMes += km*mult;
     });
-
-    // Indice de logradouros -> setores (todos os servicos de linha).
-    // Responde "que dia passa a varricao na Av X?".
-    var ruaIdx = {};
-    function idxRua(rua, setor, sub, svcNome, freq, dias, datas){
-      if (!rua) return;
-      var k = normalize(rua);
-      if (!ruaIdx[k]) ruaIdx[k] = {nome: rua, ocorr: {}};
-      var ok = svcNome + '|' + sub + '|' + setor;
-      if (!ruaIdx[k].ocorr[ok]) {
-        ruaIdx[k].ocorr[ok] = {svc: svcNome, sub: sub, setor: setor, freq: freq||'', dias: dias||'', datas: datas||[], trechos: 0, km: 0};
-      }
-      return ruaIdx[k].ocorr[ok];
-    }
 
     // Varricao Mecanizada
     var mec = {};
@@ -4439,7 +4440,7 @@ var cpluChat = (function() {
     if (/(^|[^a-z])leep([^a-z]|$)/.test(n)) return 'leep';
     if (/praca/.test(n)) return 'pracas';
     if (/nucleo|habitacion|comunidade/.test(n)) return 'nh';
-    if (/ponto.?de.?apoio|base.?operac/.test(n)) return 'pa';
+    if (/pontos?\s*de\s*apoio|base\s*operac/.test(n)) return 'pa';
     return null;
   }
 
@@ -4836,6 +4837,18 @@ var cpluChat = (function() {
     var subs = sub ? [sub] : ['AD','IP','JA'];
 
     var pool = [], label = '', unit = 'area';
+    // Servicos de linha: ranking por extensao, usando o indice de setores
+    if (SVC_LINHA[svc]) {
+      var lst = setoresDoServico(svc, sub);
+      if (lst.length === 0) return null;
+      lst.sort(function(a,b){ return wantMaior ? b.km - a.km : a.km - b.km; });
+      var t = lst.slice(0, 5);
+      var titulo = '<b>' + (wantMaior ? 'Maiores' : 'Menores') + ' setores</b> \u2014 ' + SVC_LABEL[svc];
+      if (sub) titulo += ' \u2014 ' + SUB_NAMES[sub];
+      return titulo + tbl(['#','Setor','SUB','Km Eixo','Trechos'],
+        t.map(function(e,i){ return [String(i+1), e.code, e.sub, fmt(e.km), fmt(e.trechos,0)]; }));
+    }
+
     if (svc === 'feiras') { label = 'Feiras'; subs.forEach(function(s){ pool = pool.concat(stats.feiras[s]||[]); }); }
     else if (svc === 'pracas') { label = 'Pra\u00E7as'; subs.forEach(function(s){ pool = pool.concat(stats.pracas[s]||[]); }); }
     else if (svc === 'leep') { label = 'LEEP'; subs.forEach(function(s){ pool = pool.concat(stats.leep[s]||[]); }); }
@@ -4900,15 +4913,26 @@ var cpluChat = (function() {
   }
 
   // ============ AGENDA DO DIA ============
-  function handleAgendaDia(sub, amanha) {
+  // diaAlvo: nome do dia da semana ("Quinta") para consultar um dia qualquer
+  // em vez de hoje/amanha.
+  function handleAgendaDia(sub, amanha, diaAlvo) {
+    var diasSem = ['Domingo','Segunda','Ter\u00E7a','Quarta','Quinta','Sexta','S\u00E1bado'];
     var d = new Date();
     if (amanha) d.setDate(d.getDate() + 1);
-    var diasSem = ['Domingo','Segunda','Ter\u00E7a','Quarta','Quinta','Sexta','S\u00E1bado'];
+    if (diaAlvo) {
+      // Avanca ate o proximo dia da semana pedido (hoje conta)
+      var alvoIdx = diasSem.indexOf(diaAlvo);
+      if (alvoIdx > -1) {
+        var delta = (alvoIdx - d.getDay() + 7) % 7;
+        d.setDate(d.getDate() + delta);
+      }
+    }
     var diaNome = diasSem[d.getDay()];
     var dataStr = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
     var subs = sub ? [sub] : ['AD','IP','JA'];
 
-    var title = '<b>Agenda ' + (amanha ? 'de amanh\u00E3' : 'de hoje') + '</b> \u2014 ' + diaNome + ', ' + dataStr;
+    var quando = diaAlvo ? 'de ' + diaNome : (amanha ? 'de amanh\u00E3' : 'de hoje');
+    var title = '<b>Agenda ' + quando + '</b> \u2014 ' + diaNome + ', ' + dataStr;
     if (sub) title += ' \u2014 ' + SUB_NAMES[sub];
     var resp = title;
 
@@ -4964,6 +4988,52 @@ var cpluChat = (function() {
 
     if (feirasDia.length === 0 && leepDia.length === 0 && goDia.length === 0 && mutDia.length === 0) {
       resp += '<br><small>Sem feiras, LEEP, grandes objetos ou mutir\u00E3o programados' + (sub ? ' nesta SUB' : '') + '.</small>';
+    }
+    return resp;
+  }
+
+  // ============ DETALHAMENTO SETOR A SETOR ============
+  function handleSetoresLista(svc, sub, q) {
+    var lista = setoresDoServico(svc, sub);
+    if (lista.length === 0) return null;
+
+    var n = normalize(q);
+    var sarjeta = /sarjeta/.test(n);
+    var titulo = '<b>' + SVC_LABEL[svc] + '</b> \u2014 setor a setor';
+    if (sub) titulo += ' \u2014 ' + SUB_NAMES[sub];
+
+    var resp = titulo;
+    var subsPresentes = [];
+    lista.forEach(function(e){ if (subsPresentes.indexOf(e.sub) === -1) subsPresentes.push(e.sub); });
+
+    if (SVC_LINHA[svc]) {
+      var mult = sarjeta ? 2 : 1;
+      subsPresentes.forEach(function(s) {
+        var doSub = lista.filter(function(e){ return e.sub === s; });
+        var tKm = 0, tTre = 0, tMes = 0;
+        var rows = doSub.map(function(e, i) {
+          tKm += e.km * mult; tTre += e.trechos; tMes += e.kmMes * mult;
+          return [String(i+1), e.code, fmt(e.trechos,0), fmt(e.km * mult),
+                  e.kmMes > 0 ? fmt(e.kmMes * mult, 0) : '\u2014'];
+        });
+        resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + doSub.length + ' setores \u2014 ' + fmt(tKm) + ' km</div>';
+        resp += tbl(['#','Setor','Trechos', sarjeta ? 'Km Sarjeta' : 'Km Eixo','Km/M\u00EAs'],
+                    rows,
+                    ['','TOTAL', fmt(tTre,0), fmt(tKm), tMes > 0 ? fmt(tMes,0) : '\u2014']);
+      });
+      resp += '<small>' + (sarjeta ? 'Km sarjeta (eixo \u00D7 2)' : 'Km eixo \u00B7 para dobrar, pergunte "km sarjeta"') + '</small>';
+    } else {
+      subsPresentes.forEach(function(s) {
+        var doSub = lista.filter(function(e){ return e.sub === s; });
+        var tArea = 0;
+        var rows = doSub.map(function(e, i) {
+          tArea += e.area;
+          var locais = e.items.slice(0,2).join('; ') + (e.items.length > 2 ? ' (+' + (e.items.length-2) + ')' : '');
+          return [String(i+1), e.code, locais || '\u2014', fmtArea(e.area)];
+        });
+        resp += '<div class="tbl-section">' + subLabel(s) + ' \u2014 ' + doSub.length + ' setores \u2014 ' + fmtArea(tArea) + '</div>';
+        resp += tbl(['#','Setor','Local','\u00C1rea'], rows, ['','TOTAL','', fmtArea(tArea)]);
+      });
     }
     return resp;
   }
@@ -5054,6 +5124,40 @@ var cpluChat = (function() {
   }
 
   // ============ BUSCA POR SETOR ============
+  // Nome exato do servico dentro de stats.setorIdx (usado no detalhamento
+  // setor a setor). Atencao: 'Varricao' e prefixo de 'Varricao Mecanizada',
+  // por isso a comparacao e sempre exata.
+  var SVC_IDX_NAME = {
+    varricao:   'Varri\u00E7\u00E3o',
+    mecanizada: 'Varri\u00E7\u00E3o Mecanizada',
+    go:         'Grandes Objetos',
+    mutirao:    'Mutir\u00E3o',
+    feiras:     'Feira Livre',
+    leep:       'Lavagem Especial',
+    pracas:     'Limpeza de Pra\u00E7as',
+    nh:         'N\u00FAcleo Habitacional'
+  };
+  var SVC_LABEL = {
+    varricao:'Varri\u00E7\u00E3o Manual', mecanizada:'Varri\u00E7\u00E3o Mecanizada',
+    go:'Grandes Objetos (Cata-Bagulho)', mutirao:'Mutir\u00E3o', feiras:'Feiras Livres',
+    leep:'Lavagem Especial', pracas:'Limpeza de Pra\u00E7as', nh:'N\u00FAcleos Habitacionais'
+  };
+  var SVC_LINHA = {varricao:1, mecanizada:1, go:1, mutirao:1};
+
+  function setoresDoServico(svc, sub) {
+    var alvo = SVC_IDX_NAME[svc];
+    if (!alvo) return [];
+    var out = [];
+    for (var code in stats.setorIdx) {
+      var e = stats.setorIdx[code];
+      if (e.svc !== alvo) continue;
+      if (sub && e.sub !== sub) continue;
+      out.push(e);
+    }
+    out.sort(function(a,b){ return a.code < b.code ? -1 : a.code > b.code ? 1 : 0; });
+    return out;
+  }
+
   var SVC_TO_CODE = {varricao: ['VJ','VL','VC'], mecanizada: ['MZ'], go: ['GO'], mutirao: ['MT'], feiras: ['LF'], leep: ['LE'], pracas: ['VP'], nh: ['NH']};
 
   function parseSetorNum(q) {
@@ -5131,6 +5235,34 @@ var cpluChat = (function() {
     return resp;
   }
 
+  // ============ LOGRADOUROS DE UM SERVICO ============
+  function handleContagemRuas(svc, sub) {
+    if (!SVC_LINHA[svc]) return null;
+    var lista = setoresDoServico(svc, sub);
+    if (lista.length === 0) return null;
+
+    var porSub = {};
+    lista.forEach(function(e){
+      if (!porSub[e.sub]) porSub[e.sub] = {ruas: {}, setores: 0, km: 0};
+      Object.keys(e.ruas).forEach(function(r){ if (r) porSub[e.sub].ruas[r] = 1; });
+      porSub[e.sub].setores++; porSub[e.sub].km += e.km;
+    });
+
+    var todas = {}, rows = [], tSet = 0, tKm = 0;
+    Object.keys(porSub).sort().forEach(function(s){
+      var d = porSub[s];
+      Object.assign(todas, d.ruas);
+      tSet += d.setores; tKm += d.km;
+      rows.push([s, String(nKeys(d.ruas)), String(d.setores), fmt(d.km)]);
+    });
+
+    var titulo = '<b>Logradouros</b> \u2014 ' + SVC_LABEL[svc];
+    if (sub) titulo += ' \u2014 ' + SUB_NAMES[sub];
+    return titulo + tbl(['SUB','Logradouros','Setores','Km Eixo'], rows,
+      ['TOTAL', String(nKeys(todas)), String(tSet), fmt(tKm)]) +
+      '<small>Logradouros distintos atendidos. Uma via pode aparecer em mais de uma SUB.</small>';
+  }
+
   // ============ AJUDA ============
   function handleHelp() {
     return '<b>O que posso responder</b>' +
@@ -5144,12 +5276,41 @@ var cpluChat = (function() {
         ['LEEP', 'lavagem JA \u00B7 leep de segunda'],
         ['N\u00FAcleos', 'n\u00FAcleos IP \u00B7 pr\u00F3xima limpeza comunidades'],
         ['Agenda', 'o que tem hoje \u00B7 feiras amanh\u00E3'],
+        ['Por setor', 'tamanho dos setores de cata-bagulho de IP'],
+        ['Ranking', 'maior setor de varri\u00E7\u00E3o \u00B7 menores pra\u00E7as'],
+        ['Logradouros', 'quantas ruas na varri\u00E7\u00E3o de IP'],
+        ['Agenda', 'o que tem na quinta \u00B7 agenda de s\u00E1bado'],
         ['Logradouro', 'Av Cupece \u00B7 que dia passa na R Bom Pastor'],
         ['Busca', 'Pra\u00E7a Joaniza \u00B7 Comunidade Heli\u00F3polis'],
         ['Setor', 'setor 33 varri\u00E7\u00E3o IP \u00B7 setor 02 mutir\u00E3o'],
         ['Resumo', 'resumo geral \u00B7 resumo IP']
       ]) +
       '<small>Filtre qualquer consulta por SUB (AD, IP, JA), dia da semana ou tipo (VJ/VL/VC).</small>';
+  }
+
+  // Palavras que apenas nomeiam servico, sub ou metrica — nao identificam
+  // um local. Se a consulta tiver algo alem disso, e busca por nome.
+  var PALAVRAS_GENERICAS = [
+    'varricao','varricoes','manual','mecanizada','mecanica','varredeira',
+    'feira','feiras','livre','livres','praca','pracas','mutirao','mutiroes',
+    'leep','lavagem','especial','nucleo','nucleos','habitacional','habitacionais',
+    'comunidade','comunidades','grande','grandes','objeto','objetos','cata','bagulho',
+    'ponto','pontos','apoio','base','operacional','setor','setores','servico','servicos',
+    'km','sarjeta','eixo','area','m2','metro','metros','hectare','hectares',
+    'ad','ip','ja','ipiranga','ademar','cidade','jabaquara','sub','subprefeitura',
+    'quantos','quantas','qual','quais','quando','onde','dia','dias','passa','passam',
+    'total','resumo','geral','lista','listar','mostrar','mostre','fale','info',
+    'informacao','informacoes','detalhe','detalhes','sobre','tem','esta','estao',
+    'frequencia','coleta','limpeza','hoje','amanha','proximo','proxima','data','datas',
+    'vj','vl','vc','mz','maior','menor','top','ranking','ajuda'
+  ];
+
+  function temTermoProprio(q) {
+    var n = normalize(q);
+    var toks = n.split(/[^a-z0-9]+/).filter(function(w){
+      return w.length > 2 && PALAVRAS_GENERICAS.indexOf(w) === -1;
+    });
+    return toks.length > 0;
   }
 
   function processQuery(q) {
@@ -5166,8 +5327,45 @@ var cpluChat = (function() {
       if (setorResult) return setorResult;
     }
 
-    // "hoje" / "amanha" sem servico = agenda do dia
+    // Agenda: hoje, amanha ou um dia da semana qualquer
     if (!svc && /hoje|amanha/.test(n)) return handleAgendaDia(sub, /amanha/.test(n));
+    if (!svc && /(agenda|o que tem|programad|acontece|servicos?)/.test(n)) {
+      var diaPed = parseDia(q);
+      if (diaPed) return handleAgendaDia(sub, false, diaPed);
+    }
+
+    // Quantos logradouros / ruas o servico atende
+    if (svc && /(logradouro|\bruas?\b|\bvias?\b)/.test(n) && /(quant|total|numero|lista)/.test(n)) {
+      var cr = handleContagemRuas(svc, sub);
+      if (cr) return cr;
+    }
+
+    // Detalhamento setor a setor: "tamanho dos setores de cata-bagulho de IP",
+    // "km por setor da varricao", "liste os setores do mutirao"
+    // "maior/menor setor" e ranking, nao listagem completa
+    if (svc && /(setores|por setor|setor a setor|cada setor|todos os setores)/.test(n)
+            && !/maior|menor|top|ranking/.test(n)) {
+      var sl = handleSetoresLista(svc, sub, q);
+      if (sl) return sl;
+    }
+
+    // Ranking (maior/menor) antes do handler do servico, senao "maior feira"
+    // cairia na listagem completa de feiras.
+    if (/maior|menor|top|ranking/.test(n)) {
+      var rk0 = handleRanking(q, sub);
+      if (rk0) return rk0;
+    }
+
+    // Se sobrou algum termo alem do nome do servico e da sub, o usuario esta
+    // procurando um LOCAL especifico ("Praca Joaniza"), nao a listagem toda.
+    if (temTermoProprio(q)) {
+      // Logradouro primeiro: e a base muito maior e "que dia passa na X" e a
+      // pergunta mais comum. Se a via nao existir, tenta nome de local.
+      var achouRua = handleRua(q, sub);
+      if (achouRua) return achouRua;
+      var achouNome = searchByName(q);
+      if (achouNome) return achouNome;
+    }
 
     // Servicos especificos PRIMEIRO (corrige bug do km)
     if (svc === 'feiras') return handleFeiras(sub, q);
@@ -5239,10 +5437,11 @@ var cpluChat = (function() {
       '<i>\u2022 \u00C1rea das feiras de AD</i> \u00B7 <i>maior feira</i><br>' +
       '<i>\u2022 O que tem hoje?</i> \u00B7 <i>feiras amanh\u00E3</i><br>' +
       '<i>\u2022 Que dia passa na Av Cupece?</i><br>' +
+      '<i>\u2022 Tamanho dos setores de cata-bagulho de IP</i><br>' +
       '<i>\u2022 Pra\u00E7a Joaniza</i> (busca por nome)<br>' +
       '<i>\u2022 Pr\u00F3ximo mutir\u00E3o em Ademar</i><br><br>' +
       'Digite <b>ajuda</b> para ver tudo.', 'bot');
-    addSuggestions(['Resumo geral','O que tem hoje?','Varri\u00E7\u00E3o IP','Mecanizada','Maior feira','Mutir\u00E3o','Ajuda']);
+    addSuggestions(['Resumo geral','O que tem hoje?','Setores de varri\u00E7\u00E3o IP','Setores de cata-bagulho IP','Maior setor de varri\u00E7\u00E3o','Mecanizada','Ajuda']);
   }
 
   return {
