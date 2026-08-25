@@ -1692,7 +1692,11 @@ const SERVICES = [
     freqGroups: FREQ_GROUPS_MECANIZADA,
     diasGroups: DIAS_GROUPS_MECANIZADA,
     extraField: null,
-    extraLabel: null
+    extraLabel: null,
+    // Os setores mecanizados avançam sobre áreas de outras subprefeituras,
+    // então as três divisas ficam realçadas juntas para dar o contexto real
+    // do percurso — e não só a divisa da SUB filtrada.
+    todasDivisas: true
   }
 ];
 const serviceById = {};
@@ -1848,8 +1852,12 @@ Object.keys(DIVISAS).forEach(sub => {
 
 function updateDivisaStyles(){
   const noneSelected = state.subs.size === 0;
+  const svc = state.service ? serviceById[state.service] : null;
+  // Serviços marcados com todasDivisas mostram os três contornos em destaque,
+  // independentemente das subs filtradas.
+  const realcarTodas = !!(svc && svc.todasDivisas);
   Object.keys(divisaLayers).forEach(sub => {
-    const isActive = state.subs.has(sub);
+    const isActive = realcarTodas || state.subs.has(sub);
     divisaLayers[sub].setStyle({
       color: '#000000',
       weight: isActive ? 2.6 : 1.6,
