@@ -469,21 +469,55 @@
   .leaflet-control-attribution a{ color: var(--ink-dim) !important; }
 
   /* Tooltip flutuante com setor + frequência (segue o cursor) */
+  /* Legenda no modo Plano Verão: grupo + pontos que o compõem */
+  .legend-item.legend-grupo{
+    align-items:flex-start; padding-top:7px; margin-top:4px;
+    border-top:1px solid var(--line);
+  }
+  .legend-item.legend-grupo:first-child{ border-top:none; margin-top:0; padding-top:2px; }
+  .legend-item.legend-grupo .sw{ margin-top:3px; flex-shrink:0; }
+  .legend-item.legend-grupo b{ color:var(--ink); font-size:11.5px; }
+  .lg-meta{ color:var(--ink-faint); font-size:10px; }
+  .legend-item.legend-ponto{
+    padding-left:20px; gap:6px; font-size:10.5px;
+    color:var(--ink-dim); align-items:flex-start;
+  }
+  .legend-item.legend-ponto:hover{ color:var(--ink); }
+  .lg-id{
+    flex-shrink:0; min-width:18px; text-align:center;
+    font-family:var(--mono); font-size:9px; padding:0 3px;
+    border-radius:3px; background:rgba(255,255,255,0.08); color:var(--ink-faint);
+  }
+  body.printing .legend-item.legend-grupo b{ color:#000 !important; }
+  body.printing .lg-meta{ color:#444 !important; }
+  body.printing .legend-item.legend-ponto{ color:#222 !important; }
+  body.printing .lg-id{ background:#e6e6e6 !important; color:#333 !important; }
+
   .sector-tooltip{
-    background: var(--panel) !important;
-    border: 1px solid var(--accent) !important;
+    background: rgba(14,19,28,0.95) !important;
+    border: 1px solid rgba(52,217,196,0.35) !important;
     color: var(--ink) !important;
     font-family: var(--mono) !important;
     font-size: 11.5px !important;
     font-weight: 500;
-    padding: 7px 10px !important;
-    border-radius: 7px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
-    line-height: 1.5;
+    padding: 8px 11px !important;
+    border-radius: 9px !important;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.45),
+                0 0 0 1px rgba(255,255,255,0.03) inset !important;
+    line-height: 1.55;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
-  .sector-tooltip .tt-row{ white-space: nowrap; }
-  .sector-tooltip .tt-label{ color: var(--accent); font-weight: 600; }
+  /* Um atributo por linha, empilhados: "RÓTULO: valor" */
+  .sector-tooltip .tt-row{ display: block !important; white-space: nowrap; }
+  .sector-tooltip .tt-row + .tt-row{ margin-top: 2px; }
+  .sector-tooltip .tt-label{
+    color: var(--accent); font-weight: 600;
+    font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
+    margin-right: 2px;
+  }
   .sector-tooltip::before{ display:none !important; }
+
 
   /* Badge "⚡ Hoje" no tooltip */
   .tt-hoje{
@@ -765,7 +799,121 @@
     padding:1px 4px; line-height:1.5;
   }
   .vi-local{ word-break:break-word; }
-  .leaflet-tooltip.verao-tip{ max-width:280px; white-space:normal; }
+
+  /* ---------- Plano Verão: grupos de limpeza ---------- */
+  .vg-list{ margin-bottom:8px; }
+  .vg-row{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 7px; border-radius:7px;
+    transition: background 0.15s;
+  }
+  .vg-row:hover{ background: rgba(255,255,255,0.04); }
+  .vg-row.fora{ opacity:0.45; }
+  .vg-dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0; border:1px solid rgba(255,255,255,0.3); }
+  .vg-info{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .vg-nome{ font-size:12px; color:var(--ink); font-weight:600; word-break:break-word; }
+  .vg-meta{ font-size:10px; color:var(--ink-faint); }
+  .vg-acoes{ display:flex; gap:3px; flex-shrink:0; }
+  .vg-acao{
+    width:20px; height:20px; border-radius:5px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--ink-faint);
+    background:rgba(255,255,255,0.05); transition: all 0.15s;
+  }
+  .vg-acao:hover{ background:rgba(52,217,196,0.18); color:var(--accent); }
+  .vg-acao.del:hover{ background:rgba(255,80,80,0.18); color:#ff8f8f; }
+  .vg-tools{ display:flex; gap:10px; margin-bottom:9px; }
+  .vg-tool{
+    font-size:10px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--ink-faint); cursor:pointer; border-bottom:1px dotted var(--line);
+  }
+  .vg-tool:hover{ color:var(--accent); border-color:var(--accent); }
+
+  .vg-btn{
+    border:1px solid var(--line); border-radius:8px; cursor:pointer;
+    padding:7px 12px; font-size:11.5px; font-family:inherit;
+    background:rgba(255,255,255,0.05); color:var(--ink-dim);
+    transition: all 0.15s;
+  }
+  .vg-btn:hover{ background:rgba(255,255,255,0.09); color:var(--ink); }
+  .vg-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .vg-btn.vg-ok{
+    background:rgba(52,217,196,0.16); border-color:rgba(52,217,196,0.4); color:var(--accent);
+  }
+  .vg-btn.vg-ok:hover:not(:disabled){ background:rgba(52,217,196,0.3); }
+  .vg-btn.vg-sel{ width:100%; }
+
+  .vg-selbar{
+    padding:9px 10px; border-radius:var(--radius);
+    background:rgba(52,217,196,0.07); border:1px solid rgba(52,217,196,0.22);
+  }
+  .vg-selcount{ font-size:12px; color:var(--accent); font-weight:600; }
+  .vg-selhint{ font-size:10.5px; color:var(--ink-faint); margin:2px 0 8px 0; line-height:1.4; }
+  .vg-selbtns{ display:flex; gap:6px; }
+  .vg-selbtns .vg-btn{ flex:1; }
+
+  .verao-item.sel{ background:rgba(255,224,102,0.14); }
+  .verao-item.sel .vi-id{ background:rgba(255,224,102,0.25); color:#ffe066; }
+  .vi-grupo{ display:block; font-size:10px; margin-top:1px; }
+
+  /* Caixa de criação */
+  .vg-backdrop{
+    position:fixed; inset:0; z-index:12000;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    animation: vgFade 0.18s ease;
+  }
+  @keyframes vgFade{ from{opacity:0} to{opacity:1} }
+  .vg-modal{
+    width:min(400px,100%); border-radius:16px; overflow:hidden;
+    background:rgba(16,22,32,0.98); border:1px solid rgba(52,217,196,0.18);
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    animation: vgUp 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes vgUp{ from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  .vg-head{ padding:16px 18px 12px; border-bottom:1px solid var(--line); }
+  .vg-title{ font-size:15px; font-weight:600; color:var(--ink); }
+  .vg-sub{ font-size:11.5px; color:var(--accent); margin-top:3px; }
+  .vg-body{ padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
+  .vg-field{ display:flex; flex-direction:column; gap:5px; }
+  .vg-field > span{
+    font-size:10px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--ink-faint); font-family:var(--mono);
+  }
+  .vg-field input[type="text"], .vg-field select{
+    background:rgba(255,255,255,0.06); border:1px solid var(--line);
+    border-radius:8px; padding:9px 11px; color:var(--ink);
+    font-size:13px; font-family:inherit; outline:none;
+  }
+  .vg-field input:focus, .vg-field select:focus{ border-color:rgba(52,217,196,0.5); }
+  .vg-field select option{ background:#101620; color:#e2e8f0; }
+  .vg-dupla{ display:flex; gap:10px; }
+  .vg-dupla .vg-field{ flex:1; min-width:0; }
+  .vg-field input[type="date"]{
+    background:rgba(255,255,255,0.06); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; color:var(--ink);
+    font-size:13px; font-family:inherit; outline:none; width:100%;
+  }
+  .vg-field input[type="date"]:focus{ border-color:rgba(52,217,196,0.5); }
+  .vg-field input[type="date"]::-webkit-calendar-picker-indicator{
+    filter: invert(1) opacity(0.55); cursor:pointer;
+  }
+  .vg-cores{ display:flex; flex-wrap:wrap; gap:7px; }
+  .vg-cores button{
+    width:26px; height:26px; border-radius:50%; cursor:pointer;
+    border:2px solid transparent; padding:0; transition: all 0.15s;
+  }
+  .vg-cores button:hover{ transform:scale(1.12); }
+  .vg-cores button.sel{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,0.25); }
+  .vg-aviso{
+    font-size:11px; line-height:1.45; padding:8px 10px; border-radius:8px;
+    background:rgba(240,160,60,0.12); border:1px solid rgba(240,160,60,0.28);
+    color:rgba(250,210,160,0.95);
+  }
+  .vg-foot{
+    padding:12px 18px 16px; display:flex; gap:8px; justify-content:flex-end;
+    border-top:1px solid var(--line);
+  }
 
   .sector-color{
     display:none;
@@ -932,6 +1080,7 @@
   body.printing .leaflet-container{ background:#fff !important; }
 
   /* Legenda sobreposta ao mapa, tema claro para impressao */
+  body.printing #legend.legend-vazia{ display:none !important; }
   body.printing #legend{
     position:absolute !important;
     top:6mm !important; right:6mm !important;
@@ -1916,25 +2065,116 @@ function updateDivisaStyles(){
 
 // ---------- Plano Verão: marcadores dos pontos de alagamento ----------
 const veraoMarkers = [];
+const VERAO_COR_PADRAO = '#3b82f6';
+
+// Grupos de limpeza criados pelo usuário. Ficam no navegador (localStorage),
+// então são por dispositivo — a exportação em JSON existe para compartilhar
+// ou levar para outra máquina.
+const VERAO_STORE = 'cplu.planoVerao.grupos.v1';
+let veraoGrupos = [];
+let veraoSelecao = new Set();   // ids em seleção no momento
+let veraoModoSel = false;
+
+const VERAO_FREQS = ['Diária','2x por semana','Semanal','Quinzenal','Mensal','Sob demanda'];
+const VERAO_CORES = ['#f59e0b','#ef4444','#a855f7','#22c55e','#14b8a6','#ec4899','#eab308','#f97316'];
+
+function carregarGruposVerao(){
+  try {
+    const cru = localStorage.getItem(VERAO_STORE);
+    veraoGrupos = cru ? JSON.parse(cru) : [];
+    if (!Array.isArray(veraoGrupos)) veraoGrupos = [];
+  } catch (e) {
+    veraoGrupos = [];
+  }
+}
+
+function salvarGruposVerao(){
+  try {
+    localStorage.setItem(VERAO_STORE, JSON.stringify(veraoGrupos));
+    return true;
+  } catch (e) {
+    alert('Não foi possível salvar os grupos neste navegador.\n' +
+          'Verifique se o armazenamento local está bloqueado (modo anônimo ou restrição de site).');
+    return false;
+  }
+}
+
+function hojeISO(){
+  const d = new Date();
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+// "2026-08-27" -> "27/08/2026". Monta a data em horário local para não
+// cair no dia anterior por causa do fuso.
+function dataBR(iso){
+  if (!iso) return '';
+  const p = String(iso).split('-');
+  if (p.length !== 3) return iso;
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function grupoDoPonto(id){
+  return veraoGrupos.find(g => g.pontos.includes(id)) || null;
+}
+
+function corDoPonto(id){
+  const g = grupoDoPonto(id);
+  return g ? g.cor : VERAO_COR_PADRAO;
+}
 
 function criarMarcadorVerao(p){
   const m = L.circleMarker([p.lat, p.lon], {
     radius: 11, color: '#ffffff', weight: 2.4,
-    fillColor: '#3b82f6', fillOpacity: 0.95, opacity: 0
+    fillColor: VERAO_COR_PADRAO, fillOpacity: 0.95, opacity: 0
   });
   m._isVisible = false;
-  m.bindTooltip(
-    `<div class="tt-row"><span class="tt-label">ID:</span> ${escapeHtml(p.id)}</div>` +
-    `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(p.local)}</div>`,
-    { direction: 'top', offset: [0, -8], className: 'verao-tip' }
-  );
+  m._pontoId = p.id;
+  m.on('click', () => {
+    if (!m._isVisible) return;
+    if (veraoModoSel){
+      if (veraoSelecao.has(p.id)) veraoSelecao.delete(p.id);
+      else veraoSelecao.add(p.id);
+      pintarMarcadoresVerao();
+      renderVeraoPainel();
+    } else {
+      map.flyTo([p.lat, p.lon], 17, { duration: 0.5 });
+    }
+  });
   m.addTo(map);
   if (m._path) m._path.style.pointerEvents = 'none';
   veraoMarkers.push({ marker: m, ponto: p });
   return m;
 }
 
-PLANO_VERAO.forEach(criarMarcadorVerao);
+// Reaplica cor de grupo, anel de seleção e conteúdo do tooltip
+function pintarMarcadoresVerao(){
+  veraoMarkers.forEach(({ marker, ponto }) => {
+    const g = grupoDoPonto(ponto.id);
+    const selecionado = veraoSelecao.has(ponto.id);
+    marker.setStyle({
+      fillColor: g ? g.cor : VERAO_COR_PADRAO,
+      color: selecionado ? '#ffe066' : '#ffffff',
+      weight: selecionado ? 4 : 2.4,
+      radius: selecionado ? 13 : 11
+    });
+    marker.setTooltipContent(
+      `<div class="tt-row"><span class="tt-label">ID:</span> ${escapeHtml(ponto.id)}</div>` +
+      `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(ponto.local)}</div>` +
+      (g ? `<div class="tt-row"><span class="tt-label">Grupo:</span> ${escapeHtml(g.nome)}</div>` +
+           `<div class="tt-row"><span class="tt-label">Frequência:</span> ${escapeHtml(g.freq)}</div>` +
+           (g.inicio ? `<div class="tt-row"><span class="tt-label">Início:</span> ${escapeHtml(dataBR(g.inicio))}</div>` : '') : '')
+    );
+  });
+}
+
+PLANO_VERAO.forEach(p => {
+  const m = criarMarcadorVerao(p);
+  m.bindTooltip('', { direction: 'top', offset: [0, -10], className: 'sector-tooltip' });
+});
+carregarGruposVerao();
+pintarMarcadoresVerao();
 
 function updateVeraoVisibility(){
   veraoMarkers.forEach(({ marker, ponto }) => {
@@ -1962,15 +2202,114 @@ function renderVeraoCards(){
   card.addEventListener('click', () => {
     state.planoVerao = !state.planoVerao;
     if (state.planoVerao){
-      // Modo exclusivo: sai de qualquer serviço e limpa filtros
       state.service = null;
       state.freq.clear(); state.dias.clear();
       state.setores.clear(); state.extra.clear();
       state.searchTerm = ''; state.extraSearchTerm = '';
+    } else {
+      sairModoSelecao();
     }
     renderAll();
   });
   el.appendChild(card);
+}
+
+function sairModoSelecao(){
+  veraoModoSel = false;
+  veraoSelecao.clear();
+  pintarMarcadoresVerao();
+}
+
+// ---------- Caixa de criação de grupo ----------
+function abrirDialogoGrupo(){
+  if (veraoSelecao.size === 0) return;
+  const idsSel = [...veraoSelecao];
+  const jaAgrupados = idsSel.filter(id => grupoDoPonto(id));
+  const usadas = veraoGrupos.map(g => g.cor);
+  const corSugerida = VERAO_CORES.find(c => !usadas.includes(c)) || VERAO_CORES[0];
+
+  const fundo = document.createElement('div');
+  fundo.className = 'vg-backdrop';
+  fundo.innerHTML = `
+    <div class="vg-modal" role="dialog" aria-label="Novo grupo de limpeza">
+      <div class="vg-head">
+        <div class="vg-title">Novo grupo de limpeza</div>
+        <div class="vg-sub">${idsSel.length} ponto${idsSel.length === 1 ? '' : 's'} selecionado${idsSel.length === 1 ? '' : 's'}</div>
+      </div>
+      <div class="vg-body">
+        <label class="vg-field">
+          <span>Nome do grupo</span>
+          <input type="text" id="vg-nome" maxlength="40" placeholder="Ex: Rota Sacomã">
+        </label>
+        <div class="vg-dupla">
+          <label class="vg-field">
+            <span>Frequência</span>
+            <select id="vg-freq">
+              ${VERAO_FREQS.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('')}
+            </select>
+          </label>
+          <label class="vg-field">
+            <span>Início</span>
+            <input type="date" id="vg-inicio" value="${hojeISO()}">
+          </label>
+        </div>
+        <div class="vg-field">
+          <span>Cor do grupo</span>
+          <div class="vg-cores" id="vg-cores">
+            ${VERAO_CORES.map(c => `<button type="button" data-cor="${c}" style="background:${c}" class="${c === corSugerida ? 'sel' : ''}"></button>`).join('')}
+          </div>
+        </div>
+        ${jaAgrupados.length ? `<div class="vg-aviso">${jaAgrupados.length} ponto(s) já pertencem a outro grupo e serão movidos para este.</div>` : ''}
+      </div>
+      <div class="vg-foot">
+        <button class="vg-btn vg-cancel" id="vg-cancelar">Cancelar</button>
+        <button class="vg-btn vg-ok" id="vg-salvar">Criar grupo</button>
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+
+  let cor = corSugerida;
+  fundo.querySelectorAll('#vg-cores button').forEach(b => {
+    b.addEventListener('click', () => {
+      cor = b.getAttribute('data-cor');
+      fundo.querySelectorAll('#vg-cores button').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+  });
+
+  const fechar = () => fundo.remove();
+  fundo.addEventListener('click', e => { if (e.target === fundo) fechar(); });
+  fundo.querySelector('#vg-cancelar').addEventListener('click', fechar);
+  fundo.querySelector('#vg-nome').focus();
+
+  fundo.querySelector('#vg-salvar').addEventListener('click', () => {
+    const nome = fundo.querySelector('#vg-nome').value.trim() || `Grupo ${veraoGrupos.length + 1}`;
+    const freq = fundo.querySelector('#vg-freq').value;
+    const inicio = fundo.querySelector('#vg-inicio').value || hojeISO();
+    // Um ponto pertence a um grupo só: remove das listas anteriores
+    veraoGrupos.forEach(g => { g.pontos = g.pontos.filter(id => !veraoSelecao.has(id)); });
+    veraoGrupos = veraoGrupos.filter(g => g.pontos.length > 0);
+    veraoGrupos.push({
+      id: 'g' + Date.now().toString(36),
+      nome, freq, cor, inicio,
+      pontos: idsSel,
+      criadoEm: hojeISO()
+    });
+    salvarGruposVerao();
+    sairModoSelecao();
+    fechar();
+    renderAll();
+  });
+}
+
+function excluirGrupoVerao(gid){
+  const g = veraoGrupos.find(x => x.id === gid);
+  if (!g) return;
+  if (!confirm(`Excluir o grupo "${g.nome}"? Os ${g.pontos.length} ponto(s) voltam ao padrão.`)) return;
+  veraoGrupos = veraoGrupos.filter(x => x.id !== gid);
+  salvarGruposVerao();
+  pintarMarcadoresVerao();
+  renderAll();
 }
 
 function renderVeraoPainel(){
@@ -1980,9 +2319,56 @@ function renderVeraoPainel(){
 
   const plot = PLANO_VERAO.filter(p => state.subs.has(p.sub));
 
-  let html = `<div class="block">
+  // --- Grupos salvos ---
+  let html = '';
+  const gruposVisiveis = veraoGrupos.filter(g =>
+    g.pontos.some(id => plot.some(p => p.id === id)));
+
+  html += `<div class="block">
+    <div class="block-label">Grupos de limpeza</div>`;
+  if (veraoGrupos.length === 0){
+    html += `<div class="verao-meta">Nenhum grupo criado. Use "Selecionar pontos" para montar o primeiro.</div>`;
+  } else {
+    html += '<div class="vg-list">';
+    veraoGrupos.forEach(g => {
+      const noFiltro = g.pontos.filter(id => plot.some(p => p.id === id)).length;
+      html += `<div class="vg-row${noFiltro ? '' : ' fora'}" data-grupo="${escapeHtml(g.id)}">
+        <span class="vg-dot" style="background:${escapeHtml(g.cor)}"></span>
+        <span class="vg-info">
+          <span class="vg-nome">${escapeHtml(g.nome)}</span>
+          <span class="vg-meta">${escapeHtml(g.freq)}${g.inicio ? ' · desde ' + escapeHtml(dataBR(g.inicio)) : ''} · ${g.pontos.length} ponto${g.pontos.length === 1 ? '' : 's'}${noFiltro ? '' : ' · fora do filtro'}</span>
+        </span>
+        <span class="vg-acoes">
+          <span class="vg-acao" data-focar="${escapeHtml(g.id)}" title="Enquadrar no mapa">⤢</span>
+          <span class="vg-acao del" data-excluir="${escapeHtml(g.id)}" title="Excluir grupo">✕</span>
+        </span>
+      </div>`;
+    });
+    html += '</div>';
+    html += `<div class="vg-tools">
+      <span class="vg-tool" id="vg-imprimir">imprimir grupos</span>
+    </div>`;
+  }
+
+  // --- Barra de seleção ---
+  if (veraoModoSel){
+    html += `<div class="vg-selbar">
+      <div class="vg-selcount">${veraoSelecao.size} ponto${veraoSelecao.size === 1 ? '' : 's'} selecionado${veraoSelecao.size === 1 ? '' : 's'}</div>
+      <div class="vg-selhint">Clique nos pontos do mapa ou na lista abaixo.</div>
+      <div class="vg-selbtns">
+        <button class="vg-btn vg-ok" id="vg-criar" ${veraoSelecao.size ? '' : 'disabled'}>Definir frequência</button>
+        <button class="vg-btn vg-cancel" id="vg-sair">Cancelar</button>
+      </div>
+    </div>`;
+  } else {
+    html += `<button class="vg-btn vg-sel" id="vg-modo">Selecionar pontos</button>`;
+  }
+  html += '</div>';
+
+  // --- Lista de pontos ---
+  html += `<div class="block">
     <div class="block-label">Pontos de alagamento</div>
-    <div class="verao-meta">Período 15/10 a 31/03 · atendimento quinzenal</div>
+    <div class="verao-meta">Período 15/10 a 31/03</div>
     <div class="verao-list">`;
 
   ['AD','IP','JA'].forEach(s => {
@@ -1990,22 +2376,55 @@ function renderVeraoPainel(){
     if (doSub.length === 0) return;
     html += `<div class="verao-sub">${escapeHtml(s)} — ${escapeHtml(nomeSub(s))} · ${doSub.length}</div>`;
     doSub.forEach(p => {
-      html += `<div class="verao-item" data-id="${escapeHtml(p.id)}">
-        <span class="vi-id">${escapeHtml(p.id)}</span>
-        <span class="vi-local">${escapeHtml(p.local)}</span>
+      const g = grupoDoPonto(p.id);
+      const sel = veraoSelecao.has(p.id);
+      html += `<div class="verao-item${sel ? ' sel' : ''}" data-id="${escapeHtml(p.id)}">
+        <span class="vi-id" style="${g ? `background:${escapeHtml(g.cor)}33;color:${escapeHtml(g.cor)}` : ''}">${escapeHtml(p.id)}</span>
+        <span class="vi-local">${escapeHtml(p.local)}${g ? `<span class="vi-grupo" style="color:${escapeHtml(g.cor)}">${escapeHtml(g.nome)} · ${escapeHtml(g.freq)}</span>` : ''}</span>
       </div>`;
     });
   });
-  html += '</div>';
-
-  html += '</div>';
+  html += '</div></div>';
   alvo.innerHTML = html;
 
-  // Clicar no item da lista leva ao ponto no mapa e abre o endereço
+  // --- Ligações ---
+  const q = sel => alvo.querySelector(sel);
+  if (q('#vg-modo')) q('#vg-modo').addEventListener('click', () => {
+    veraoModoSel = true; renderVeraoPainel(); pintarMarcadoresVerao();
+  });
+  if (q('#vg-sair')) q('#vg-sair').addEventListener('click', () => {
+    sairModoSelecao(); renderVeraoPainel();
+  });
+  if (q('#vg-criar')) q('#vg-criar').addEventListener('click', abrirDialogoGrupo);
+  if (q('#vg-imprimir')) q('#vg-imprimir').addEventListener('click', () => {
+    entrarModoImpressao().then(() => window.print());
+  });
+
+  alvo.querySelectorAll('[data-excluir]').forEach(b => {
+    b.addEventListener('click', e => { e.stopPropagation(); excluirGrupoVerao(b.getAttribute('data-excluir')); });
+  });
+  alvo.querySelectorAll('[data-focar]').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      const g = veraoGrupos.find(x => x.id === b.getAttribute('data-focar'));
+      if (!g) return;
+      const pts = PLANO_VERAO.filter(p => g.pontos.includes(p.id));
+      if (pts.length === 0) return;
+      map.fitBounds(L.latLngBounds(pts.map(p => [p.lat, p.lon])), { padding: [60, 60], maxZoom: 16 });
+    });
+  });
+
   alvo.querySelectorAll('.verao-item').forEach(row => {
     row.addEventListener('click', () => {
-      const alvoId = row.getAttribute('data-id');
-      const achado = veraoMarkers.find(v => v.ponto.id === alvoId);
+      const pid = row.getAttribute('data-id');
+      if (veraoModoSel){
+        if (veraoSelecao.has(pid)) veraoSelecao.delete(pid);
+        else veraoSelecao.add(pid);
+        pintarMarcadoresVerao();
+        renderVeraoPainel();
+        return;
+      }
+      const achado = veraoMarkers.find(v => v.ponto.id === pid);
       if (!achado) return;
       map.flyTo([achado.ponto.lat, achado.ponto.lon], 17, { duration: 0.6 });
       achado.marker.openTooltip();
@@ -3193,12 +3612,60 @@ function applyFilters(){
 // ---------- Legenda ----------
 function renderLegend(){
   const body = document.getElementById('legend-body');
+  const box = document.getElementById('legend');
+  const head = document.getElementById('legend-toggle');
   body.innerHTML = '';
-  if (state.subs.size === 0 || !state.service){
-    document.getElementById('legend').style.display = 'none';
+
+  const esconder = () => {
+    box.style.display = 'none';
+    // A folha de impressão força display:block na legenda; a classe abaixo
+    // impede que uma caixa vazia apareça no canto da página.
+    box.classList.add('legend-vazia');
+  };
+
+  // Plano Verão: a legenda lista os grupos de limpeza e seus pontos
+  if (state.planoVerao){
+    const pontosVisiveis = PLANO_VERAO.filter(p => state.subs.has(p.sub));
+    const grupos = veraoGrupos
+      .map(g => ({ g, pts: g.pontos
+        .map(id => pontosVisiveis.find(p => p.id === id))
+        .filter(Boolean) }))
+      .filter(x => x.pts.length > 0);
+
+    if (state.subs.size === 0 || grupos.length === 0){ esconder(); return; }
+
+    box.style.display = 'block';
+    box.classList.remove('legend-vazia');
+    if (head) head.childNodes[0].nodeValue = 'Grupos de limpeza ';
+
+    grupos.forEach(({ g, pts }) => {
+      const cab = document.createElement('div');
+      cab.className = 'legend-item legend-grupo';
+      cab.innerHTML =
+        `<span class="sw" style="background:${escapeHtml(g.cor)}"></span>` +
+        `<span><b>${escapeHtml(g.nome)}</b><br>` +
+        `<span class="lg-meta">${escapeHtml(g.freq)}` +
+        `${g.inicio ? ' · desde ' + escapeHtml(dataBR(g.inicio)) : ''} · ${pts.length} ponto${pts.length === 1 ? '' : 's'}</span></span>`;
+      body.appendChild(cab);
+
+      pts.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'legend-item legend-ponto';
+        item.innerHTML = `<span class="lg-id">${escapeHtml(p.id)}</span><span>${escapeHtml(p.local)}</span>`;
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', () => {
+          map.flyTo([p.lat, p.lon], 17, { duration: 0.6 });
+        });
+        body.appendChild(item);
+      });
+    });
     return;
   }
-  document.getElementById('legend').style.display = 'block';
+
+  if (head) head.childNodes[0].nodeValue = 'Legenda de setores ';
+  if (state.subs.size === 0 || !state.service){ esconder(); return; }
+  box.style.display = 'block';
+  box.classList.remove('legend-vazia');
   const multiSub = state.subs.size > 1;
   const svc = serviceById[state.service];
   const visibleKeys = [...getVisibleSetorKeys()].sort(compareByFinalNumber);
@@ -3623,11 +4090,15 @@ function restaurarDaURL(){
 
 // ---------- Impressao ----------
 function prepararImpressao(){
-  const svc = state.service ? serviceById[state.service].nome : 'Nenhum serviço selecionado';
+  const svc = state.planoVerao
+    ? 'Plano Verão — Pontos de Alagamento'
+    : (state.service ? serviceById[state.service].nome : 'Nenhum serviço selecionado');
   const subs = [...state.subs].sort().map(s => `${s} — ${nomeSub(s)}`).join(' · ') || 'Nenhuma subprefeitura';
-  const visiveis = state.service
-    ? featureRefs.filter(f => f.serviceId === state.service && f.layer._isVisible).length
-    : 0;
+  const visiveis = state.planoVerao
+    ? PLANO_VERAO.filter(p => state.subs.has(p.sub)).length
+    : (state.service
+        ? featureRefs.filter(f => f.serviceId === state.service && f.layer._isVisible).length
+        : 0);
 
   const filtros = [];
   if (state.freq.size)    filtros.push('Frequência: ' + [...state.freq].join(', '));
@@ -3635,6 +4106,8 @@ function prepararImpressao(){
   if (state.setores.size) filtros.push(`${state.setores.size} setor(es) isolado(s)`);
   if (state.extra.size)   filtros.push(`${state.extra.size} item(ns) selecionado(s)`);
   if (state.mostrarHoje)  filtros.push('Destaque: execução de hoje');
+  if (state.planoVerao && veraoGrupos.length)
+    filtros.push(`${veraoGrupos.length} grupo(s) de limpeza`);
 
   // Legenda: sobreposta quando cabe; abaixo do mapa (em colunas) quando ha
   // setores demais para o canto do mapa comportar.
@@ -3642,6 +4115,7 @@ function prepararImpressao(){
   const nItens = legendBody ? legendBody.querySelectorAll('.legend-item').length : 0;
   const abaixo = nItens > 20;
   document.body.classList.toggle('legend-below', abaixo);
+
   if (legendBody){
     // ~14 itens por coluna na faixa inferior; entre 3 e 9 colunas
     legendBody.style.columnCount = abaixo
