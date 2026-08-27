@@ -2610,12 +2610,12 @@ const escolaMarkers = []; // { marker, sub }
 const ESCOLA_ELEITORAL = { color: '#1e3a8a', fill: '#6366f1' };
 
 [...ESCOLAS].sort((a, b) => a.eleitores - b.eleitores).forEach(esc => {
-  // Raio proporcional ao porte do local, entre 5 e 9 px
-  const raio = Math.max(5, Math.min(9, 5 + Math.round(esc.eleitores / 2500)));
+  // Raio proporcional ao porte do local, entre 8 e 15 px
+  const raio = Math.max(8, Math.min(15, 8 + Math.round(esc.eleitores / 1600)));
   const marker = L.circleMarker([esc.lat, esc.lon], {
     radius: raio,
     color: ESCOLA_ELEITORAL.color,
-    weight: 1.2,
+    weight: 1.6,
     fillColor: ESCOLA_ELEITORAL.fill,
     fillOpacity: 0.9
   });
