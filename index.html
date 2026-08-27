@@ -898,6 +898,15 @@
   .vg-field input[type="date"]::-webkit-calendar-picker-indicator{
     filter: invert(1) opacity(0.55); cursor:pointer;
   }
+  .vg-previa{
+    padding:9px 11px; border-radius:8px; line-height:1.45;
+    background:rgba(52,217,196,0.07); border:1px solid rgba(52,217,196,0.2);
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .vg-previa b{ font-size:12px; color:var(--accent); }
+  .vg-previa span{ font-size:10.5px; color:var(--ink-dim); }
+  .vg-previa .vg-previa-nota{ color:var(--ink-faint); font-size:9.5px; margin-top:2px; }
+  .vg-prox{ font-size:10px; color:var(--accent); }
   .vg-cores{ display:flex; flex-wrap:wrap; gap:7px; }
   .vg-cores button{
     width:26px; height:26px; border-radius:50%; cursor:pointer;
@@ -2115,6 +2124,142 @@ function dataBR(iso){
   return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
+// ---------- Feriados e programação automática ----------
+// Páscoa pelo algoritmo de Meeus/Butcher — dela derivam Carnaval,
+// Sexta-feira Santa e Corpus Christi.
+function pascoa(ano){
+  const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100;
+  const d = Math.floor(b / 4), e = b % 4;
+  const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(ano, mes - 1, dia);
+}
+
+function isoDe(d){
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function somaDias(d, n){
+  const x = new Date(d.getTime());
+  x.setDate(x.getDate() + n);
+  return x;
+}
+
+// Feriados válidos para São Paulo capital: nacionais + estadual (9 de julho)
+// + municipais (25 de janeiro e Corpus Christi). Carnaval é ponto facultativo,
+// mas na prática paralisa a operação, por isso entra na lista.
+const _cacheFeriados = {};
+function feriadosDoAno(ano){
+  if (_cacheFeriados[ano]) return _cacheFeriados[ano];
+  const f = {};
+  const fixos = {
+    '01-01': 'Confraternização Universal',
+    '01-25': 'Aniversário de São Paulo',
+    '04-21': 'Tiradentes',
+    '05-01': 'Dia do Trabalho',
+    '07-09': 'Revolução Constitucionalista',
+    '09-07': 'Independência',
+    '10-12': 'Nossa Senhora Aparecida',
+    '11-02': 'Finados',
+    '11-15': 'Proclamação da República',
+    '11-20': 'Consciência Negra',
+    '12-25': 'Natal'
+  };
+  Object.keys(fixos).forEach(md => { f[`${ano}-${md}`] = fixos[md]; });
+
+  const p = pascoa(ano);
+  f[isoDe(somaDias(p, -48))] = 'Carnaval (segunda)';
+  f[isoDe(somaDias(p, -47))] = 'Carnaval (terça)';
+  f[isoDe(somaDias(p, -2))]  = 'Sexta-feira Santa';
+  f[isoDe(somaDias(p, 60))]  = 'Corpus Christi';
+
+  _cacheFeriados[ano] = f;
+  return f;
+}
+
+function ehFeriado(d){
+  return !!feriadosDoAno(d.getFullYear())[isoDe(d)];
+}
+
+// Domingo e feriado não têm coleta: empurra para o próximo dia válido
+function proximoDiaUtil(d){
+  let x = new Date(d.getTime());
+  let voltas = 0;
+  while ((x.getDay() === 0 || ehFeriado(x)) && voltas < 30){
+    x = somaDias(x, 1);
+    voltas++;
+  }
+  return x;
+}
+
+// Intervalo em dias de cada frequência. "2x por semana" e "Sob demanda"
+// recebem tratamento próprio.
+const FREQ_DIAS = {
+  'Diária': 1,
+  'Semanal': 7,
+  'Quinzenal': 15,
+  'Mensal': 30
+};
+
+function gerarDatasGrupo(inicioISO, fimISO, freq){
+  if (!inicioISO || !fimISO || freq === 'Sob demanda') return [];
+  const [ai, mi, di] = inicioISO.split('-').map(Number);
+  const [af, mf, df] = fimISO.split('-').map(Number);
+  const ini = new Date(ai, mi - 1, di);
+  const fim = new Date(af, mf - 1, df);
+  if (fim < ini) return [];
+
+  const datas = [];
+  const vistos = new Set();
+  const registrar = d => {
+    if (d > fim) return false;
+    const util = proximoDiaUtil(d);
+    if (util > fim) return false;
+    const iso = isoDe(util);
+    if (!vistos.has(iso)){ vistos.add(iso); datas.push(iso); }
+    return true;
+  };
+
+  if (freq === '2x por semana'){
+    // Duas vezes por semana com 3 e 4 dias de intervalo
+    let cursor = new Date(ini.getTime());
+    let alterna = 0;
+    while (cursor <= fim && datas.length < 400){
+      if (!registrar(cursor)) break;
+      cursor = somaDias(cursor, alterna % 2 === 0 ? 3 : 4);
+      alterna++;
+    }
+  } else {
+    const passo = FREQ_DIAS[freq] || 15;
+    let cursor = new Date(ini.getTime());
+    while (cursor <= fim && datas.length < 400){
+      if (!registrar(cursor)) break;
+      cursor = somaDias(cursor, passo);
+    }
+  }
+  return datas;
+}
+
+function proximaDataGrupo(g){
+  if (!g.datas || g.datas.length === 0) return null;
+  const hoje = hojeISO();
+  return g.datas.find(d => d >= hoje) || null;
+}
+
+// A temporada de chuvas vai de 15/10 a 31/03: o fim padrão é o próximo 31/03
+function fimTemporadaISO(){
+  const hoje = new Date();
+  const ano = hoje.getMonth() >= 3 ? hoje.getFullYear() + 1 : hoje.getFullYear();
+  return `${ano}-03-31`;
+}
+
 function grupoDoPonto(id){
   return veraoGrupos.find(g => g.pontos.includes(id)) || null;
 }
@@ -2164,7 +2309,9 @@ function pintarMarcadoresVerao(){
       `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(ponto.local)}</div>` +
       (g ? `<div class="tt-row"><span class="tt-label">Grupo:</span> ${escapeHtml(g.nome)}</div>` +
            `<div class="tt-row"><span class="tt-label">Frequência:</span> ${escapeHtml(g.freq)}</div>` +
-           (g.inicio ? `<div class="tt-row"><span class="tt-label">Início:</span> ${escapeHtml(dataBR(g.inicio))}</div>` : '') : '')
+           (g.inicio ? `<div class="tt-row"><span class="tt-label">Início:</span> ${escapeHtml(dataBR(g.inicio))}</div>` : '') +
+           (() => { const px = proximaDataGrupo(g); return px
+             ? `<div class="tt-row"><span class="tt-label">Próximo:</span> ${escapeHtml(dataBR(px))}</div>` : ''; })() : '')
     );
   });
 }
@@ -2252,7 +2399,12 @@ function abrirDialogoGrupo(){
             <span>Início</span>
             <input type="date" id="vg-inicio" value="${hojeISO()}">
           </label>
+          <label class="vg-field">
+            <span>Fim</span>
+            <input type="date" id="vg-fim" value="${fimTemporadaISO()}">
+          </label>
         </div>
+        <div class="vg-previa" id="vg-previa"></div>
         <div class="vg-field">
           <span>Cor do grupo</span>
           <div class="vg-cores" id="vg-cores">
@@ -2277,6 +2429,32 @@ function abrirDialogoGrupo(){
     });
   });
 
+  // Prévia: recalcula as datas conforme o usuário mexe nos campos
+  const previa = fundo.querySelector('#vg-previa');
+  function atualizarPrevia(){
+    const f  = fundo.querySelector('#vg-freq').value;
+    const di = fundo.querySelector('#vg-inicio').value;
+    const df = fundo.querySelector('#vg-fim').value;
+    const ds = gerarDatasGrupo(di, df, f);
+    if (f === 'Sob demanda'){
+      previa.innerHTML = '<b>Sem programação automática</b><span>As datas serão definidas caso a caso.</span>';
+      return;
+    }
+    if (ds.length === 0){
+      previa.innerHTML = '<b>Nenhuma data no período</b><span>Verifique as datas de início e fim.</span>';
+      return;
+    }
+    const mostra = ds.slice(0, 4).map(dataBR).join(' · ');
+    previa.innerHTML =
+      `<b>${ds.length} atendimento${ds.length === 1 ? '' : 's'} programado${ds.length === 1 ? '' : 's'}</b>` +
+      `<span>${mostra}${ds.length > 4 ? ` … +${ds.length - 4}` : ''}</span>` +
+      `<span class="vg-previa-nota">Domingos e feriados nacionais, estaduais e municipais são pulados.</span>`;
+  }
+  ['#vg-freq', '#vg-inicio', '#vg-fim'].forEach(sel => {
+    fundo.querySelector(sel).addEventListener('change', atualizarPrevia);
+  });
+  atualizarPrevia();
+
   const fechar = () => fundo.remove();
   fundo.addEventListener('click', e => { if (e.target === fundo) fechar(); });
   fundo.querySelector('#vg-cancelar').addEventListener('click', fechar);
@@ -2286,12 +2464,14 @@ function abrirDialogoGrupo(){
     const nome = fundo.querySelector('#vg-nome').value.trim() || `Grupo ${veraoGrupos.length + 1}`;
     const freq = fundo.querySelector('#vg-freq').value;
     const inicio = fundo.querySelector('#vg-inicio').value || hojeISO();
+    const fim = fundo.querySelector('#vg-fim').value || fimTemporadaISO();
+    const datas = gerarDatasGrupo(inicio, fim, freq);
     // Um ponto pertence a um grupo só: remove das listas anteriores
     veraoGrupos.forEach(g => { g.pontos = g.pontos.filter(id => !veraoSelecao.has(id)); });
     veraoGrupos = veraoGrupos.filter(g => g.pontos.length > 0);
     veraoGrupos.push({
       id: 'g' + Date.now().toString(36),
-      nome, freq, cor, inicio,
+      nome, freq, cor, inicio, fim, datas,
       pontos: idsSel,
       criadoEm: hojeISO()
     });
@@ -2310,6 +2490,48 @@ function excluirGrupoVerao(gid){
   salvarGruposVerao();
   pintarMarcadoresVerao();
   renderAll();
+}
+
+// Uma linha por ponto, com as colunas do grupo repetidas — assim a planilha
+// aceita filtro e tabela dinâmica direto. Separador ";" e decimal brasileiro.
+function exportarGruposExcel(){
+  if (veraoGrupos.length === 0){
+    alert('Nenhum grupo criado ainda.');
+    return;
+  }
+  const esc = v => {
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+
+  const cab = ['Grupo','Frequencia','Data_Inicio','Data_Fim','Qtd_Pontos',
+               'Qtd_Atendimentos','ID_Ponto','Endereco','SUB','Subprefeitura',
+               'Latitude','Longitude','Datas_Programadas'];
+  const linhas = [cab.join(';')];
+
+  veraoGrupos.forEach(g => {
+    const datasTxt = (g.datas || []).map(dataBR).join(' | ');
+    g.pontos.forEach(id => {
+      const p = PLANO_VERAO.find(x => x.id === id);
+      if (!p) return;
+      linhas.push([
+        g.nome, g.freq, dataBR(g.inicio), dataBR(g.fim),
+        g.pontos.length, (g.datas || []).length,
+        p.id, p.local, p.sub, nomeSub(p.sub),
+        String(p.lat).replace('.', ','), String(p.lon).replace('.', ','),
+        datasTxt
+      ].map(esc).join(';'));
+    });
+  });
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob(['\ufeff' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CPLU_PlanoVerao_grupos_${stamp}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function renderVeraoPainel(){
@@ -2336,7 +2558,10 @@ function renderVeraoPainel(){
         <span class="vg-dot" style="background:${escapeHtml(g.cor)}"></span>
         <span class="vg-info">
           <span class="vg-nome">${escapeHtml(g.nome)}</span>
-          <span class="vg-meta">${escapeHtml(g.freq)}${g.inicio ? ' · desde ' + escapeHtml(dataBR(g.inicio)) : ''} · ${g.pontos.length} ponto${g.pontos.length === 1 ? '' : 's'}${noFiltro ? '' : ' · fora do filtro'}</span>
+          <span class="vg-meta">${escapeHtml(g.freq)} · ${g.pontos.length} ponto${g.pontos.length === 1 ? '' : 's'}${(g.datas && g.datas.length) ? ' · ' + g.datas.length + ' atend.' : ''}${noFiltro ? '' : ' · fora do filtro'}</span>
+          ${(() => { const px = proximaDataGrupo(g); return px
+            ? `<span class="vg-prox">Próximo: ${escapeHtml(dataBR(px))}</span>`
+            : (g.inicio ? `<span class="vg-meta">Início ${escapeHtml(dataBR(g.inicio))}</span>` : ''); })()}
         </span>
         <span class="vg-acoes">
           <span class="vg-acao" data-focar="${escapeHtml(g.id)}" title="Enquadrar no mapa">⤢</span>
@@ -2346,6 +2571,7 @@ function renderVeraoPainel(){
     });
     html += '</div>';
     html += `<div class="vg-tools">
+      <span class="vg-tool" id="vg-excel">exportar excel</span>
       <span class="vg-tool" id="vg-imprimir">imprimir grupos</span>
     </div>`;
   }
@@ -2396,6 +2622,7 @@ function renderVeraoPainel(){
     sairModoSelecao(); renderVeraoPainel();
   });
   if (q('#vg-criar')) q('#vg-criar').addEventListener('click', abrirDialogoGrupo);
+  if (q('#vg-excel')) q('#vg-excel').addEventListener('click', exportarGruposExcel);
   if (q('#vg-imprimir')) q('#vg-imprimir').addEventListener('click', () => {
     entrarModoImpressao().then(() => window.print());
   });
@@ -3645,7 +3872,8 @@ function renderLegend(){
         `<span class="sw" style="background:${escapeHtml(g.cor)}"></span>` +
         `<span><b>${escapeHtml(g.nome)}</b><br>` +
         `<span class="lg-meta">${escapeHtml(g.freq)}` +
-        `${g.inicio ? ' · desde ' + escapeHtml(dataBR(g.inicio)) : ''} · ${pts.length} ponto${pts.length === 1 ? '' : 's'}</span></span>`;
+        `${g.inicio ? ' · ' + escapeHtml(dataBR(g.inicio)) : ''}${g.fim ? ' a ' + escapeHtml(dataBR(g.fim)) : ''} · ${pts.length} ponto${pts.length === 1 ? '' : 's'}` +
+        `${(g.datas && g.datas.length) ? ' · ' + g.datas.length + ' atendimentos' : ''}</span></span>`;
       body.appendChild(cab);
 
       pts.forEach(p => {
