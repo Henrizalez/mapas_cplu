@@ -828,6 +828,12 @@
     color:var(--ink-faint); cursor:pointer; border-bottom:1px dotted var(--line);
   }
   .vg-tool:hover{ color:var(--accent); border-color:var(--accent); }
+  .vg-status{
+    margin-left:auto; font-size:9px; text-transform:uppercase; letter-spacing:0.05em;
+    padding:1px 7px; border-radius:8px; align-self:center;
+  }
+  .vg-status.on{ background:rgba(52,217,196,0.12); color:rgba(52,217,196,0.8); }
+  .vg-status.off{ background:rgba(240,160,60,0.14); color:rgba(250,200,150,0.9); }
 
   .vg-btn{
     border:1px solid var(--line); border-radius:8px; cursor:pointer;
@@ -1727,7 +1733,7 @@ const MECANIZADA = [{"id":"1","rua":"R Juan de La Cruz","setor":"AD30203MZ0002",
 // Registros com coordenada fora da área de operação recebem rev:1 e NÃO são
 // plotados — seriam posicionados em outro município. Ficam listados no painel
 // para correção na planilha de origem.
-const PLANO_VERAO = [{"id":"1","lat":-23.663362,"lon":-46.677957,"local":"AVENIDA INTERLAGOS com AVENIDA YERVANT KISSAJIKIAN","sub":"AD"},{"id":"2","lat":-23.698455,"lon":-46.673118,"local":"AVENI DA NOSA SENHORA OE SABARA, 5500","sub":"AD"},{"id":"3","lat":-23.694078,"lon":-46.677738,"local":"AVENI DA NOSSASENHORA DO SABARA","sub":"AD"},{"id":"4","lat":-23.704559,"lon":-46.643718,"local":"ESTRADA DO ALVARENGA, 3752","sub":"AD"},{"id":"5","lat":-23.705306,"lon":-46.643171,"local":"ESTRADA DO ALVARENGA, 3822","sub":"AD"},{"id":"6","lat":-23.705463,"lon":-46.642791,"local":"ESTRADA DO ALVARENGA, 3970","sub":"AD"},{"id":"7","lat":-23.713339,"lon":-46.634402,"local":"RUA ATHOS PALMA, 324","sub":"AD"},{"id":"8","lat":-23.686776,"lon":-46.666222,"local":"RUA BRUNO TAUT, 61","sub":"AD"},{"id":"9","lat":-23.679614,"lon":-46.653291,"local":"RUA CARLOS FACCHINA, 951","sub":"AD"},{"id":"10","lat":-23.678867,"lon":-46.655712,"local":"RUA DESEMBARGADOR OLAVO FERREIRA PRADO, 04","sub":"AD"},{"id":"11","lat":-23.650225,"lon":-46.670231,"local":"RUA DOS CAFEZAIS, 569","sub":"AD"},{"id":"12","lat":-23.701828,"lon":-46.647469,"local":"RUA DOS MANDUBIS, 133","sub":"AD"},{"id":"13","lat":-23.686756,"lon":-46.645596,"local":"RUA GUAICURI, 230","sub":"AD"},{"id":"14","lat":-23.679873,"lon":-46.667328,"local":"RUA ISAIAS, 207","sub":"AD"},{"id":"15","lat":-23.690059,"lon":-46.658187,"local":"RUA PEDRO FERNANDES ARAGÃO, 105","sub":"AD"},{"id":"16","lat":-23.68688,"lon":-46.662284,"local":"RUA PROFESSOR CARLOS DECOURT, 59","sub":"AD"},{"id":"17","lat":-23.654087,"lon":-46.668583,"local":"RUA JOSEFINA MARTINELI DA SILVA","sub":"AD"},{"id":"18","lat":-23.65962,"lon":-46.663851,"local":"RUA TOMASINA","sub":"AD"},{"id":"19","lat":-23.659095,"lon":-46.663586,"local":"RUA VALANGO","sub":"AD"},{"id":"32","lat":-23.611701,"lon":-46.580969,"local":"AVENIDA ALLMIRANTE DELAMARE X AVENIDA MICHEL SALIBA","sub":"IP"},{"id":"33","lat":-23.579006,"lon":-46.599331,"local":"AVENIDA DO ESTADO (SENTI OC CENTRO), ENTRE VIADUTO GRANDE SAO PAULO E RUA PRESIDENTE BARÃO DE GUARAJA","sub":"IP"},{"id":"34","lat":-23.566705,"lon":-46.6095,"local":"AVENIDA DO ESTADO (SENTIDO SACOMA), ENTRE RUA PRESIDENTE BARAO DE GUARAJA E VIADUTO GRANDE SAO PAULO","sub":"IP"},{"id":"35","lat":-23.57034,"lon":-46.60567,"local":"AVENIDA DO ESTADO X RUA AGOSTINHO GOMES","sub":"IP"},{"id":"36","lat":-23.5695,"lon":-46.607034,"local":"AVENIDA DO ESTADO X RUA CIPRIANO BARATA","sub":"IP"},{"id":"37","lat":-23.582173,"lon":-46.599295,"local":"AVENIDA DO ESTADO X RUA DOS PATRIOTAS","sub":"IP"},{"id":"38","lat":-23.571196,"lon":-46.60461,"local":"AVENIDA DO ESTADO X RUA HIPOLITO SOARES","sub":"IP"},{"id":"41","lat":-23.639623,"lon":-46.627519,"local":"AVENIDA MIGUEL ESTEFNO x RUA ETRUSCOS","sub":"IP"},{"id":"42","lat":-23.613964,"lon":-46.608446,"local":"AVENIDA PRESIDENTE TANCREDO NEVES X RUA DAVID LOPES","sub":"IP"},{"id":"43","lat":-23.588414,"lon":-46.594692,"local":"AVENIDA PRESIDENTE WILSON X RUA DOM LUCAS OBES","sub":"IP"},{"id":"44","lat":-23.567851,"lon":-46.60669,"local":"AVENIDA PRESIDENTE WILSON, ENTRE RUA PRESIDENTE BATISTA PEREIRA E RUA DOS PATRIOTAS","sub":"IP"},{"id":"45","lat":-23.58204,"lon":-46.598007,"local":"AVENIDA PRESIDENTE WILSCN, ENTRE RUA DOS PATRIOTAS E RUA AIDA","sub":"IP"},{"id":"46","lat":-23.56842,"lon":-46.60895,"local":"AVENIDA TERESA CRISTINA X AVENIDA DO ESTADO","sub":"IP"},{"id":"47","lat":-23.571206,"lon":-46.6046,"local":"AVENIDA TERESE CRISTINA X RUA HIPOLITO SOARES","sub":"IP"},{"id":"48","lat":-23.57705,"lon":-46.609031,"local":"AVENIDA TEREZA CRISTINA X RUA TABOR","sub":"IP"},{"id":"50","lat":-23.632099,"lon":-46.583059,"local":"ESTRADA DAS LAGRIMAS, ALTURA, 4,180","sub":"IP"},{"id":"51","lat":-23.60316,"lon":-46.60112,"local":"PRAÇA ALTEMAR DUTRA","sub":"IP"},{"id":"53","lat":-23.621915,"lon":-46.582947,"local":"RUA BARBINOS","sub":"IP"},{"id":"54","lat":-23.59872,"lon":-46.59714,"local":"RUA DAS JUNTAS PROVISORAS x RUA DO GRITO","sub":"IP"},{"id":"55","lat":-23.595619,"lon":-46.597588,"local":"RUA DAS JUNTAS PROVISORIAS X RUA DOIS DE JULHO","sub":"IP"},{"id":"56","lat":-23.588973,"lon":-46.6003,"local":"RUA DOM LUCAS OBES X RUA DO MANIFESTO","sub":"IP"},{"id":"57","lat":-23.568078,"lon":-46.607353,"local":"RUA PRESIDENTE BATISTA PEREIRA","sub":"IP"},{"id":"58","lat":-23.567041,"lon":-46.608233,"local":"RUA PRESIDENTE COSTA PINTO","sub":"IP"},{"id":"61","lat":-23.636376,"lon":-46.631723,"local":"AVENIDA AGUA FUNDA","sub":"JA"},{"id":"62","lat":-23.659747,"lon":-46.643689,"local":"RUA FRANCESCO SOLIMENA, 47","sub":"JA"},{"id":"63","lat":-23.663283,"lon":-46.65946,"local":"RUA FREDERICO ALBUQUERQUE, 161","sub":"JA"},{"id":"64","lat":-23.670518,"lon":-46.643927,"local":"RUA VALE DA NOGUEIRA, 266","sub":"JA"},{"id":"65","lat":-23.654562,"lon":-46.665927,"local":"RUA ALBA","sub":"JA"},{"id":"66","lat":-23.660989,"lon":-46.63261,"local":"RUA DOUTOR RENE FERNANDES","sub":"JA"},{"id":"67","lat":-23.636274,"lon":-46.648392,"local":"RUA FREIRE FARTO","sub":"JA"},{"id":"68","lat":-23.650672,"lon":-46.66009,"local":"RUA RISHIN MATSUDA","sub":"JA"},{"id":"69","lat":-23.64817,"lon":-46.653266,"local":"RUA SILVIO MORSOLETO","sub":"JA"},{"id":"70","lat":-23.644713,"lon":-46.655644,"local":"RUA VITORIANA","sub":"JA"},{"id":"71","lat":-23.657366,"lon":-46.644652,"local":"RUA DOS GUASSATUNGAS","sub":"JA"},{"id":"72","lat":-23.653884,"lon":-46.64827,"local":"RUA DOS MARAPES","sub":"JA"},{"id":"73","lat":-23.670321,"lon":-46.642385,"local":"TRAVESSA PRANTO DO MAR","sub":"JA"}];
+const PLANO_VERAO = [{"id":"1","lat":-23.663362,"lon":-46.677957,"local":"AVENIDA INTERLAGOS com AVENIDA YERVANT KISSAJIKIAN","sub":"AD"},{"id":"2","lat":-23.698455,"lon":-46.673118,"local":"AVENI DA NOSA SENHORA OE SABARA, 5500","sub":"AD"},{"id":"3","lat":-23.694078,"lon":-46.677738,"local":"AVENI DA NOSSASENHORA DO SABARA","sub":"AD"},{"id":"4","lat":-23.704559,"lon":-46.643718,"local":"ESTRADA DO ALVARENGA, 3752","sub":"AD"},{"id":"5","lat":-23.705306,"lon":-46.643171,"local":"ESTRADA DO ALVARENGA, 3822","sub":"AD"},{"id":"6","lat":-23.705463,"lon":-46.642791,"local":"ESTRADA DO ALVARENGA, 3970","sub":"AD"},{"id":"7","lat":-23.713339,"lon":-46.634402,"local":"RUA ATHOS PALMA, 324","sub":"AD"},{"id":"8","lat":-23.686776,"lon":-46.666222,"local":"RUA BRUNO TAUT, 61","sub":"AD"},{"id":"9","lat":-23.679614,"lon":-46.653291,"local":"RUA CARLOS FACCHINA, 951","sub":"AD"},{"id":"10","lat":-23.678867,"lon":-46.655712,"local":"RUA DESEMBARGADOR OLAVO FERREIRA PRADO, 04","sub":"AD"},{"id":"11","lat":-23.650225,"lon":-46.670231,"local":"RUA DOS CAFEZAIS, 569","sub":"AD"},{"id":"12","lat":-23.701828,"lon":-46.647469,"local":"RUA DOS MANDUBIS, 133","sub":"AD"},{"id":"13","lat":-23.686756,"lon":-46.645596,"local":"RUA GUAICURI, 230","sub":"AD"},{"id":"14","lat":-23.679873,"lon":-46.667328,"local":"RUA ISAIAS, 207","sub":"AD"},{"id":"15","lat":-23.690059,"lon":-46.658187,"local":"RUA PEDRO FERNANDES ARAGÃO, 105","sub":"AD"},{"id":"16","lat":-23.68688,"lon":-46.662284,"local":"RUA PROFESSOR CARLOS DECOURT, 59","sub":"AD"},{"id":"17","lat":-23.654087,"lon":-46.668583,"local":"RUA JOSEFINA MARTINELI DA SILVA","sub":"AD"},{"id":"18","lat":-23.65962,"lon":-46.663851,"local":"RUA TOMASINA","sub":"AD"},{"id":"19","lat":-23.659095,"lon":-46.663586,"local":"RUA VALANGO","sub":"AD"},{"id":"20","lat":-23.611701,"lon":-46.580969,"local":"AVENIDA ALLMIRANTE DELAMARE X AVENIDA MICHEL SALIBA","sub":"IP"},{"id":"21","lat":-23.579006,"lon":-46.599331,"local":"AVENIDA DO ESTADO (SENTI OC CENTRO), ENTRE VIADUTO GRANDE SAO PAULO E RUA PRESIDENTE BARÃO DE GUARAJA","sub":"IP"},{"id":"22","lat":-23.566705,"lon":-46.6095,"local":"AVENIDA DO ESTADO (SENTIDO SACOMA), ENTRE RUA PRESIDENTE BARAO DE GUARAJA E VIADUTO GRANDE SAO PAULO","sub":"IP"},{"id":"23","lat":-23.57034,"lon":-46.60567,"local":"AVENIDA DO ESTADO X RUA AGOSTINHO GOMES","sub":"IP"},{"id":"24","lat":-23.5695,"lon":-46.607034,"local":"AVENIDA DO ESTADO X RUA CIPRIANO BARATA","sub":"IP"},{"id":"25","lat":-23.582173,"lon":-46.599295,"local":"AVENIDA DO ESTADO X RUA DOS PATRIOTAS","sub":"IP"},{"id":"26","lat":-23.571196,"lon":-46.60461,"local":"AVENIDA DO ESTADO X RUA HIPOLITO SOARES","sub":"IP"},{"id":"27","lat":-23.639623,"lon":-46.627519,"local":"AVENIDA MIGUEL ESTEFNO x RUA ETRUSCOS","sub":"IP"},{"id":"28","lat":-23.613964,"lon":-46.608446,"local":"AVENIDA PRESIDENTE TANCREDO NEVES X RUA DAVID LOPES","sub":"IP"},{"id":"29","lat":-23.588414,"lon":-46.594692,"local":"AVENIDA PRESIDENTE WILSON X RUA DOM LUCAS OBES","sub":"IP"},{"id":"30","lat":-23.567851,"lon":-46.60669,"local":"AVENIDA PRESIDENTE WILSON, ENTRE RUA PRESIDENTE BATISTA PEREIRA E RUA DOS PATRIOTAS","sub":"IP"},{"id":"31","lat":-23.58204,"lon":-46.598007,"local":"AVENIDA PRESIDENTE WILSCN, ENTRE RUA DOS PATRIOTAS E RUA AIDA","sub":"IP"},{"id":"32","lat":-23.56842,"lon":-46.60895,"local":"AVENIDA TERESA CRISTINA X AVENIDA DO ESTADO","sub":"IP"},{"id":"33","lat":-23.571206,"lon":-46.6046,"local":"AVENIDA TERESE CRISTINA X RUA HIPOLITO SOARES","sub":"IP"},{"id":"34","lat":-23.57705,"lon":-46.609031,"local":"AVENIDA TEREZA CRISTINA X RUA TABOR","sub":"IP"},{"id":"35","lat":-23.632099,"lon":-46.583059,"local":"ESTRADA DAS LAGRIMAS, ALTURA, 4,180","sub":"IP"},{"id":"36","lat":-23.60316,"lon":-46.60112,"local":"PRAÇA ALTEMAR DUTRA","sub":"IP"},{"id":"37","lat":-23.621915,"lon":-46.582947,"local":"RUA BARBINOS","sub":"IP"},{"id":"38","lat":-23.59872,"lon":-46.59714,"local":"RUA DAS JUNTAS PROVISORAS x RUA DO GRITO","sub":"IP"},{"id":"39","lat":-23.595619,"lon":-46.597588,"local":"RUA DAS JUNTAS PROVISORIAS X RUA DOIS DE JULHO","sub":"IP"},{"id":"40","lat":-23.568078,"lon":-46.607353,"local":"RUA PRESIDENTE BATISTA PEREIRA","sub":"IP"},{"id":"41","lat":-23.567041,"lon":-46.608233,"local":"RUA PRESIDENTE COSTA PINTO","sub":"IP"},{"id":"42","lat":-23.607056,"lon":-46.598233,"local":"ESTRADA DAS LÁGRIMAS, 633","sub":"IP"},{"id":"43","lat":-23.635125,"lon":-46.603861,"local":"RUA ALEXANDRE","sub":"IP"},{"id":"44","lat":-23.648735,"lon":-46.613489,"local":"AVENIDA CURSINO, 5550","sub":"IP"},{"id":"45","lat":-23.657469,"lon":-46.614703,"local":"RUA ADOLFO REILE X RUA ALONSO SAVINI","sub":"IP"},{"id":"46","lat":-23.654451,"lon":-46.610049,"local":"AVENIDA DOS OURIVES, 480","sub":"IP"},{"id":"47","lat":-23.654592,"lon":-46.602473,"local":"AVENIDA DOS OURIVES X RUA GIOVANNI DA CONEGLIANO","sub":"IP"},{"id":"48","lat":-23.636376,"lon":-46.631723,"local":"AVENIDA AGUA FUNDA","sub":"JA"},{"id":"49","lat":-23.659747,"lon":-46.643689,"local":"RUA FRANCESCO SOLIMENA, 47","sub":"JA"},{"id":"50","lat":-23.663283,"lon":-46.65946,"local":"RUA FREDERICO ALBUQUERQUE, 161","sub":"JA"},{"id":"51","lat":-23.670518,"lon":-46.643927,"local":"RUA VALE DA NOGUEIRA, 266","sub":"JA"},{"id":"52","lat":-23.654562,"lon":-46.665927,"local":"RUA ALBA","sub":"JA"},{"id":"53","lat":-23.660989,"lon":-46.63261,"local":"RUA DOUTOR RENE FERNANDES","sub":"JA"},{"id":"54","lat":-23.636274,"lon":-46.648392,"local":"RUA FREIRE FARTO","sub":"JA"},{"id":"55","lat":-23.650672,"lon":-46.66009,"local":"RUA RISHIN MATSUDA","sub":"JA"},{"id":"56","lat":-23.64817,"lon":-46.653266,"local":"RUA SILVIO MORSOLETO","sub":"JA"},{"id":"57","lat":-23.644713,"lon":-46.655644,"local":"RUA VITORIANA","sub":"JA"},{"id":"58","lat":-23.657366,"lon":-46.644652,"local":"RUA DOS GUASSATUNGAS","sub":"JA"},{"id":"59","lat":-23.653884,"lon":-46.64827,"local":"RUA DOS MARAPES","sub":"JA"},{"id":"60","lat":-23.670321,"lon":-46.642385,"local":"TRAVESSA PRANTO DO MAR","sub":"JA"}];
 
 // ---------- Definição dos serviços ----------
 const FREQ_GROUPS_VARRICAO = [
@@ -2080,6 +2086,82 @@ const VERAO_COR_PADRAO = '#3b82f6';
 // então são por dispositivo — a exportação em JSON existe para compartilhar
 // ou levar para outra máquina.
 const VERAO_STORE = 'cplu.planoVerao.grupos.v1';
+
+// Os grupos ficam no Supabase para que qualquer pessoa que abra o mapa veja
+// os mesmos grupos. O localStorage continua como cópia local: serve de reserva
+// quando a rede falha e evita tela vazia enquanto a consulta não retorna.
+const SB_URL = 'https://cwyjkssdmvdrocafyyya.supabase.co';
+const SB_KEY = 'sb_publishable_kRsZbuahdpCMRuyUjfnWmA_kAMSoahP';
+const SB_TABELA = 'plano_verao_grupos';
+let veraoOnline = false;   // última sincronização deu certo?
+
+function sbHeaders(extra){
+  return Object.assign({
+    'apikey': SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Content-Type': 'application/json'
+  }, extra || {});
+}
+
+// Converte entre o formato do banco (snake_case) e o usado na interface
+function daLinha(r){
+  return { id: r.id, nome: r.nome, freq: r.freq, cor: r.cor,
+           inicio: r.inicio || '', fim: r.fim || '',
+           pontos: r.pontos || [], datas: r.datas || [],
+           criadoEm: (r.criado_em || '').slice(0, 10) };
+}
+function paraLinha(g){
+  return { id: g.id, nome: g.nome, freq: g.freq, cor: g.cor,
+           inicio: g.inicio || null, fim: g.fim || null,
+           pontos: g.pontos || [], datas: g.datas || [],
+           atualizado_em: new Date().toISOString() };
+}
+
+async function baixarGruposVerao(){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${SB_TABELA}?select=*&order=criado_em.asc`,
+                          { headers: sbHeaders() });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const linhas = await r.json();
+    veraoGrupos = linhas.map(daLinha);
+    veraoOnline = true;
+    try { localStorage.setItem(VERAO_STORE, JSON.stringify(veraoGrupos)); } catch (e) {}
+    return true;
+  } catch (e) {
+    veraoOnline = false;
+    return false;
+  }
+}
+
+async function enviarGrupoVerao(g){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${SB_TABELA}`, {
+      method: 'POST',
+      headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify(paraLinha(g))
+    });
+    if (!r.ok) throw new Error('http ' + r.status);
+    veraoOnline = true;
+    return true;
+  } catch (e) {
+    veraoOnline = false;
+    return false;
+  }
+}
+
+async function apagarGrupoVerao(gid){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${SB_TABELA}?id=eq.${encodeURIComponent(gid)}`, {
+      method: 'DELETE', headers: sbHeaders({ 'Prefer': 'return=minimal' })
+    });
+    if (!r.ok) throw new Error('http ' + r.status);
+    veraoOnline = true;
+    return true;
+  } catch (e) {
+    veraoOnline = false;
+    return false;
+  }
+}
 let veraoGrupos = [];
 let veraoSelecao = new Set();   // ids em seleção no momento
 let veraoModoSel = false;
@@ -2088,6 +2170,7 @@ const VERAO_FREQS = ['Diária','2x por semana','Semanal','Quinzenal','Mensal','S
 const VERAO_CORES = ['#f59e0b','#ef4444','#a855f7','#22c55e','#14b8a6','#ec4899','#eab308','#f97316'];
 
 function carregarGruposVerao(){
+  // Cópia local: aparece na hora, sem esperar a rede
   try {
     const cru = localStorage.getItem(VERAO_STORE);
     veraoGrupos = cru ? JSON.parse(cru) : [];
@@ -2095,17 +2178,15 @@ function carregarGruposVerao(){
   } catch (e) {
     veraoGrupos = [];
   }
+  // Em seguida busca a versão compartilhada e atualiza a tela
+  baixarGruposVerao().then(ok => {
+    if (ok){ pintarMarcadoresVerao(); renderVeraoPainel(); renderLegend(); }
+  });
 }
 
 function salvarGruposVerao(){
-  try {
-    localStorage.setItem(VERAO_STORE, JSON.stringify(veraoGrupos));
-    return true;
-  } catch (e) {
-    alert('Não foi possível salvar os grupos neste navegador.\n' +
-          'Verifique se o armazenamento local está bloqueado (modo anônimo ou restrição de site).');
-    return false;
-  }
+  try { localStorage.setItem(VERAO_STORE, JSON.stringify(veraoGrupos)); } catch (e) {}
+  return true;
 }
 
 function hojeISO(){
@@ -2468,17 +2549,26 @@ function abrirDialogoGrupo(){
     const datas = gerarDatasGrupo(inicio, fim, freq);
     // Um ponto pertence a um grupo só: remove das listas anteriores
     veraoGrupos.forEach(g => { g.pontos = g.pontos.filter(id => !veraoSelecao.has(id)); });
+    const removidosAgora = veraoGrupos.filter(g => g.pontos.length === 0).map(g => g.id);
     veraoGrupos = veraoGrupos.filter(g => g.pontos.length > 0);
-    veraoGrupos.push({
+    const novo = {
       id: 'g' + Date.now().toString(36),
       nome, freq, cor, inicio, fim, datas,
       pontos: idsSel,
       criadoEm: hojeISO()
-    });
+    };
+    veraoGrupos.push(novo);
     salvarGruposVerao();
     sairModoSelecao();
     fechar();
     renderAll();
+
+    // Publica para os demais usuários; os grupos que perderam pontos também
+    // precisam ser atualizados (ou removidos) no servidor.
+    Promise.all([enviarGrupoVerao(novo)].concat(
+      veraoGrupos.filter(g => g.id !== novo.id).map(enviarGrupoVerao),
+      removidosAgora.map(apagarGrupoVerao)
+    )).then(() => { renderVeraoPainel(); });
   });
 }
 
@@ -2490,6 +2580,7 @@ function excluirGrupoVerao(gid){
   salvarGruposVerao();
   pintarMarcadoresVerao();
   renderAll();
+  apagarGrupoVerao(gid).then(() => renderVeraoPainel());
 }
 
 // Uma linha por ponto, com as colunas do grupo repetidas — assim a planilha
@@ -2573,6 +2664,11 @@ function renderVeraoPainel(){
     html += `<div class="vg-tools">
       <span class="vg-tool" id="vg-excel">exportar excel</span>
       <span class="vg-tool" id="vg-imprimir">imprimir grupos</span>
+      <span class="vg-tool" id="vg-sync">atualizar</span>
+      <span class="vg-status ${veraoOnline ? 'on' : 'off'}" title="${veraoOnline
+        ? 'Grupos sincronizados — visíveis para todos os usuários'
+        : 'Sem conexão com o servidor: alterações ficam só neste navegador'}">
+        ${veraoOnline ? 'compartilhado' : 'local'}</span>
     </div>`;
   }
 
@@ -2623,6 +2719,12 @@ function renderVeraoPainel(){
   });
   if (q('#vg-criar')) q('#vg-criar').addEventListener('click', abrirDialogoGrupo);
   if (q('#vg-excel')) q('#vg-excel').addEventListener('click', exportarGruposExcel);
+  if (q('#vg-sync')) q('#vg-sync').addEventListener('click', async (e) => {
+    e.target.textContent = 'atualizando...';
+    await baixarGruposVerao();
+    pintarMarcadoresVerao();
+    renderAll();
+  });
   if (q('#vg-imprimir')) q('#vg-imprimir').addEventListener('click', () => {
     entrarModoImpressao().then(() => window.print());
   });
