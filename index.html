@@ -603,11 +603,13 @@
     transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
     box-shadow: var(--shadow-md);
   }
-  #info-panel.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  /* Nunca captura o mouse: centralizado, o painel fica sobre as vias, e
+     capturar o ponteiro fazia o traçado perder o hover e piscar sem parar */
+  #info-panel.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:none; }
   /* Centralizado, não colide mais com os botões laterais */
   #info-panel.shifted-up{ bottom: 16px; }
-  #info-panel{ max-width: 380px; }
-  #info-panel.has-dates{ max-width: 420px; }
+  #info-panel{ max-width: 360px; }
+  #info-panel.has-dates{ max-width: 360px; }
   #info-panel .ip-rua{
     font-size: 13px;
     font-weight: 600;
@@ -643,9 +645,6 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 5px;
     margin-top: 6px;
-    max-height: 180px;
-    overflow-y: auto;
-    pointer-events: auto;
   }
   #info-panel .ip-date-chip{
     font-family: var(--mono);
@@ -2885,16 +2884,24 @@ function showInfo(route, serviceId){
   if (!comDatas) html += linha('Dia de execução', route.dias);
 
   if (comDatas){
-    // Passadas ficam esmaecidas e a próxima é destacada
-    const ordenadas = route.datas.slice().sort((a, b) => parseDateBR(a) - parseDateBR(b));
+    // Só as próximas: a lista completa chega a 27 datas num setor de
+    // Cata-Bagulho, e o que interessa no hover é o que ainda vai acontecer.
     const agora = new Date(); agora.setHours(0, 0, 0, 0);
-    const prox = ordenadas.find(d => parseDateBR(d) >= agora);
-    html += `<div class="ip-dates-label">Datas de execução · ${ordenadas.length}</div>`;
-    html += '<div class="ip-dates-grid">' + ordenadas.map(d => {
-      const passou = parseDateBR(d) < agora;
-      const cls = d === prox ? ' prox' : (passou ? ' passou' : '');
-      return `<span class="ip-date-chip${cls}">${escapeHtml(d)}</span>`;
-    }).join('') + '</div>';
+    const futuras = route.datas
+      .filter(d => parseDateBR(d) >= agora)
+      .sort((a, b) => parseDateBR(a) - parseDateBR(b));
+
+    if (futuras.length === 0){
+      html += `<div class="ip-dates-label">Sem execuções previstas</div>`;
+    } else {
+      const mostrar = futuras.slice(0, 3);
+      const resto = futuras.length - mostrar.length;
+      html += `<div class="ip-dates-label">Próximas execuções` +
+              (resto > 0 ? ` · +${resto}` : '') + `</div>`;
+      html += '<div class="ip-dates-grid">' + mostrar.map((d, i) =>
+        `<span class="ip-date-chip${i === 0 ? ' prox' : ''}">${escapeHtml(d)}</span>`
+      ).join('') + '</div>';
+    }
   }
 
   infoPanel.innerHTML = html;
