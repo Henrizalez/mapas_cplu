@@ -583,9 +583,12 @@
 
   /* Painel de info do trecho (hover) */
   #info-panel{
+    /* Centralizado no rodapé: à esquerda ficava por cima dos botões
+       flutuantes (Rótulos, Hoje, Agenda, Localização, Exportar, Imprimir) */
     position:absolute;
     bottom:16px;
-    left:16px;
+    left:50%;
+    transform: translateX(-50%) translateY(8px);
     z-index:1100;
     background: var(--panel);
     backdrop-filter: var(--blur);
@@ -597,13 +600,14 @@
     max-width: 320px;
     pointer-events:none;
     opacity:0;
-    transform: translateY(8px);
     transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
     box-shadow: var(--shadow-md);
   }
-  #info-panel.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
-  #info-panel.shifted-up{ bottom: 64px; }
-  #info-panel.has-dates{ max-width: 300px; }
+  #info-panel.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  /* Centralizado, não colide mais com os botões laterais */
+  #info-panel.shifted-up{ bottom: 16px; }
+  #info-panel{ max-width: 380px; }
+  #info-panel.has-dates{ max-width: 420px; }
   #info-panel .ip-rua{
     font-size: 13px;
     font-weight: 600;
@@ -653,6 +657,13 @@
     padding: 4px 5px;
     text-align: center;
     white-space: nowrap;
+  }
+  #info-panel .ip-date-chip.passou{ opacity: 0.35; }
+  #info-panel .ip-date-chip.prox{
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(52,217,196,0.1);
+    font-weight: 600;
   }
 
   /* Marcador de setor clicável: cursor de mão para indicar interatividade */
@@ -1513,8 +1524,11 @@
     }
     /* Painel de info (hover): por padrão acima do toggle de rótulos;
        quando este último está visível (.shifted-up), sobe mais ainda */
-    #info-panel{ left:16px; right:16px; bottom:130px; max-width:none; }
-    #info-panel.shifted-up{ bottom: 130px; }
+    #info-panel{
+      left:50%; right:auto; bottom:16px;
+      width: calc(100vw - 32px); max-width:none;
+    }
+    #info-panel.shifted-up{ bottom: 16px; }
   }
 </style>
 </head>
@@ -2853,11 +2867,39 @@ function renderVeraoPainel(){
 const infoPanel = document.getElementById('info-panel');
 
 function showInfo(route, serviceId){
+  const svc = serviceById[serviceId];
   const hoje = state.mostrarHoje && routeExecutaHoje(route, serviceId);
   const badge = hoje ? ' <span class="tt-hoje">⚡ Hoje</span>' : '';
-  infoPanel.innerHTML = `<div class="ip-rua">${escapeHtml(route.rua || route.nome || '(sem nome)')}${badge}</div>`;
+
+  const linha = (rot, val) =>
+    val ? `<div class="ip-row"><span>${rot}</span><b>${escapeHtml(String(val))}</b></div>` : '';
+
+  let html = `<div class="ip-rua">${escapeHtml(route.rua || route.nome || '(sem nome)')}${badge}</div>`;
+  html += linha('Serviço', svc ? svc.nome : '');
+  html += linha('Subprefeitura', nomeSub(route.sub));
+  html += linha('Setor', route.setor);
+  html += linha('Frequência', route.freq);
+
+  // Serviços por dia da semana mostram os dias; os de calendário, as datas
+  const comDatas = svc && svc.hasDates && Array.isArray(route.datas) && route.datas.length > 0;
+  if (!comDatas) html += linha('Dia de execução', route.dias);
+
+  if (comDatas){
+    // Passadas ficam esmaecidas e a próxima é destacada
+    const ordenadas = route.datas.slice().sort((a, b) => parseDateBR(a) - parseDateBR(b));
+    const agora = new Date(); agora.setHours(0, 0, 0, 0);
+    const prox = ordenadas.find(d => parseDateBR(d) >= agora);
+    html += `<div class="ip-dates-label">Datas de execução · ${ordenadas.length}</div>`;
+    html += '<div class="ip-dates-grid">' + ordenadas.map(d => {
+      const passou = parseDateBR(d) < agora;
+      const cls = d === prox ? ' prox' : (passou ? ' passou' : '');
+      return `<span class="ip-date-chip${cls}">${escapeHtml(d)}</span>`;
+    }).join('') + '</div>';
+  }
+
+  infoPanel.innerHTML = html;
   infoPanel.classList.add('show');
-  infoPanel.classList.remove('has-dates');
+  infoPanel.classList.toggle('has-dates', !!comDatas);
 }
 function hideInfo(){ infoPanel.classList.remove('show'); }
 
