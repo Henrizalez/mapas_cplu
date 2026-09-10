@@ -871,6 +871,7 @@
   .verao-item.sel{ background:rgba(255,224,102,0.14); }
   .verao-item.sel .vi-id{ background:rgba(255,224,102,0.25); color:#ffe066; }
   .vi-grupo{ display:block; font-size:10px; margin-top:1px; }
+  .vi-sub2{ display:block; font-size:9.5px; color:var(--ink-faint); margin-top:1px; line-height:1.35; }
 
   /* Caixa de criação */
   .vg-backdrop{
@@ -1555,12 +1556,18 @@
         <div class="service-cards" id="service-cards"></div>
       </div>
 
+      <div class="block" id="escolas-block" style="display:none;">
+        <div class="block-label">Escolas Eleitorais</div>
+        <div class="service-cards" id="escolas-cards"></div>
+      </div>
+
       <div class="block" id="verao-block" style="display:none;">
         <div class="block-label">Plano de Contingência</div>
         <div class="service-cards" id="verao-cards"></div>
       </div>
 
       <div id="filters-area"></div>
+      <div id="escolas-painel"></div>
       <div id="verao-painel"></div>
 
     </div>
@@ -2021,6 +2028,7 @@ const state = {
   extra: new Set(),
   searchTerm: '',
   planoVerao: false,
+  escolasMod: false,
   extraSearchTerm: '',
   showSectorLabels: true,
   showEcopontos: false,
@@ -2167,7 +2175,7 @@ function updateDivisaStyles(){
   const svc = state.service ? serviceById[state.service] : null;
   // Serviços marcados com todasDivisas mostram os três contornos em destaque,
   // independentemente das subs filtradas.
-  const realcarTodas = !!(svc && svc.todasDivisas) || state.planoVerao;
+  const realcarTodas = !!(svc && svc.todasDivisas) || state.planoVerao || state.escolasMod;
   Object.keys(divisaLayers).forEach(sub => {
     const isActive = realcarTodas || state.subs.has(sub);
     divisaLayers[sub].setStyle({
@@ -2504,6 +2512,7 @@ PLANO_VERAO.forEach(p => {
 });
 carregarGruposVerao();
 pintarMarcadoresVerao();
+carregarGruposEsc();
 
 function updateVeraoVisibility(){
   veraoMarkers.forEach(({ marker, ponto }) => {
@@ -2532,6 +2541,8 @@ function renderVeraoCards(){
     state.planoVerao = !state.planoVerao;
     if (state.planoVerao){
       state.service = null;
+      state.escolasMod = false;
+      sairModoSelEsc();
       state.freq.clear(); state.dias.clear();
       state.setores.clear(); state.extra.clear();
       state.searchTerm = ''; state.extraSearchTerm = '';
@@ -3417,22 +3428,462 @@ const ESCOLA_ELEITORAL = { color: '#1e3a8a', fill: '#6366f1' };
       ` <span style="opacity:.6">(${esc.secoes} seç${esc.secoes === 1 ? 'ão' : 'ões'})</span></div>`,
     { sticky: true, direction: 'top', offset: [0, -6], className: 'sector-tooltip' }
   );
-  marker.on('mouseover', () => { marker.setStyle({ radius: marker._raioBase + 2 }); });
-  marker.on('mouseout',  () => { marker.setStyle({ radius: marker._raioBase }); });
+  marker.on('mouseover', () => {
+    if (!escSelecao.has(esc.id)) marker.setStyle({ radius: marker._raioBase + 2 });
+  });
+  marker.on('mouseout', () => {
+    if (!escSelecao.has(esc.id)) marker.setStyle({ radius: marker._raioBase });
+  });
+  marker.on('click', () => {
+    if (!state.escolasMod) return;
+    if (escModoSel){
+      if (escSelecao.has(esc.id)) escSelecao.delete(esc.id);
+      else escSelecao.add(esc.id);
+      pintarEscolas();
+      renderEscolasPainel();
+    } else {
+      map.flyTo([esc.lat, esc.lon], 17, { duration: 0.5 });
+    }
+  });
   escolaMarkers.push({ marker, sub: esc.sub });
 });
 
+// ==========================================================================
+// Escolas Eleitorais: grupos de limpeza
+// ==========================================================================
+// Mesma lógica do Plano Verão, mas com dois modos de exibição:
+//  - dentro de um serviço (checkbox): escolas em cor única, sem agrupamento;
+//  - no módulo próprio: cores por grupo, seleção e criação de grupos.
+const ESCOLA_COR_PADRAO = '#6366f1';
+const ESC_STORE = 'cplu.escolas.grupos.v1';
+const ESC_TABELA = 'escolas_grupos';
+
+let escGrupos = [];
+let escSelecao = new Set();
+let escModoSel = false;
+let escOnline = false;
+
+function escDaLinha(r){
+  return { id: r.id, nome: r.nome, freq: r.freq, cor: r.cor,
+           inicio: r.inicio || '', fim: r.fim || '',
+           escolas: r.escolas || [], datas: r.datas || [] };
+}
+function escParaLinha(g){
+  return { id: g.id, nome: g.nome, freq: g.freq, cor: g.cor,
+           inicio: g.inicio || null, fim: g.fim || null,
+           escolas: g.escolas || [], datas: g.datas || [],
+           atualizado_em: new Date().toISOString() };
+}
+
+async function baixarGruposEsc(){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${ESC_TABELA}?select=*&order=criado_em.asc`,
+                          { headers: sbHeaders() });
+    if (!r.ok) throw new Error('http ' + r.status);
+    escGrupos = (await r.json()).map(escDaLinha);
+    escOnline = true;
+    try { localStorage.setItem(ESC_STORE, JSON.stringify(escGrupos)); } catch (e) {}
+    return true;
+  } catch (e) { escOnline = false; return false; }
+}
+
+async function enviarGrupoEsc(g){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${ESC_TABELA}`, {
+      method: 'POST',
+      headers: sbHeaders({ 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body: JSON.stringify(escParaLinha(g))
+    });
+    if (!r.ok) throw new Error('http ' + r.status);
+    escOnline = true; return true;
+  } catch (e) { escOnline = false; return false; }
+}
+
+async function apagarGrupoEsc(gid){
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${ESC_TABELA}?id=eq.${encodeURIComponent(gid)}`, {
+      method: 'DELETE', headers: sbHeaders({ 'Prefer': 'return=minimal' })
+    });
+    if (!r.ok) throw new Error('http ' + r.status);
+    escOnline = true; return true;
+  } catch (e) { escOnline = false; return false; }
+}
+
+function carregarGruposEsc(){
+  try {
+    const cru = localStorage.getItem(ESC_STORE);
+    escGrupos = cru ? JSON.parse(cru) : [];
+    if (!Array.isArray(escGrupos)) escGrupos = [];
+  } catch (e) { escGrupos = []; }
+  baixarGruposEsc().then(ok => {
+    if (ok){ pintarEscolas(); renderEscolasPainel(); renderLegend(); }
+  });
+}
+
+function salvarGruposEsc(){
+  try { localStorage.setItem(ESC_STORE, JSON.stringify(escGrupos)); } catch (e) {}
+  return true;
+}
+
+function grupoDaEscola(id){
+  return escGrupos.find(g => g.escolas.includes(id)) || null;
+}
+
+// Cor e rótulo mudam conforme o modo. Dentro de um serviço a escola é só
+// referência de campo: cor única e sem menção a grupos.
+function pintarEscolas(){
+  const noModulo = state.escolasMod;
+  escolaMarkers.forEach(({ marker }) => {
+    const esc = marker._escolaData;
+    if (!esc) return;
+    const g = noModulo ? grupoDaEscola(esc.id) : null;
+    const sel = noModulo && escSelecao.has(esc.id);
+    marker.setStyle({
+      fillColor: g ? g.cor : ESCOLA_COR_PADRAO,
+      color: sel ? '#ffe066' : '#ffffff',
+      weight: sel ? 4 : 1.6,
+      radius: sel ? marker._raioBase + 3 : marker._raioBase
+    });
+    marker.setTooltipContent(
+      `<div class="tt-row"><span class="tt-label">ID:</span> ${escapeHtml(String(esc.id))}</div>` +
+      `<div class="tt-row"><span class="tt-label">Zona Eleitoral:</span> ${escapeHtml(String(esc.zona))}</div>` +
+      `<div class="tt-row"><span class="tt-label">Escola:</span> ${escapeHtml(esc.nome)}</div>` +
+      `<div class="tt-row"><span class="tt-label">Endereço:</span> ${escapeHtml(esc.endereco)}</div>` +
+      `<div class="tt-row"><span class="tt-label">Qtd. Eleitores:</span> ${esc.eleitores.toLocaleString('pt-BR')}` +
+        ` <span style="opacity:.6">(${esc.secoes} seç${esc.secoes === 1 ? 'ão' : 'ões'})</span></div>` +
+      (g ? `<div class="tt-row"><span class="tt-label">Grupo:</span> ${escapeHtml(g.nome)}</div>` +
+           `<div class="tt-row"><span class="tt-label">Frequência:</span> ${escapeHtml(g.freq)}</div>` +
+           (() => { const px = proximaDataGrupo(g); return px
+             ? `<div class="tt-row"><span class="tt-label">Próximo:</span> ${escapeHtml(dataBR(px))}</div>` : ''; })() : '')
+    );
+  });
+}
+
 function updateEscolasVisibility(){
   escolaMarkers.forEach(({ marker, sub }) => {
-    // Disponível em Varrição Manual, Mutirão e Grandes Objetos
-    const shouldShow = ESCOLAS_SERVICES.includes(state.service) && state.showEscolas && state.subs.has(sub);
-    if (shouldShow && !marker._isVisible){
-      marker.addTo(map);
-      marker._isVisible = true;
-    } else if (!shouldShow && marker._isVisible){
-      marker.removeFrom(map);
-      marker._isVisible = false;
+    // No módulo depende só da sub; dentro de um serviço depende do checkbox
+    const show = state.escolasMod
+      ? state.subs.has(sub)
+      : (ESCOLAS_SERVICES.includes(state.service) && state.showEscolas && state.subs.has(sub));
+    if (show && !map.hasLayer(marker)) marker.addTo(map);
+    else if (!show && map.hasLayer(marker)) map.removeLayer(marker);
+  });
+}
+
+function sairModoSelEsc(){
+  escModoSel = false;
+  escSelecao.clear();
+  pintarEscolas();
+}
+
+function renderEscolasCards(){
+  const bloco = document.getElementById('escolas-block');
+  const el = document.getElementById('escolas-cards');
+  if (!bloco || !el) return;
+  bloco.style.display = state.subs.size === 0 ? 'none' : 'block';
+  if (state.subs.size === 0) return;
+
+  const total = ESCOLAS.filter(e => state.subs.has(e.sub)).length;
+  el.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'service-card' + (state.escolasMod ? ' active' : '');
+  card.innerHTML =
+    `<span class="sc-name">Escolas Eleitorais</span>` +
+    `<span class="sc-count">${total} local${total === 1 ? '' : 'is'} de votação</span>`;
+  card.addEventListener('click', () => {
+    state.escolasMod = !state.escolasMod;
+    if (state.escolasMod){
+      state.service = null;
+      state.planoVerao = false;
+      sairModoSelecao();
+      state.freq.clear(); state.dias.clear();
+      state.setores.clear(); state.extra.clear();
+      state.searchTerm = ''; state.extraSearchTerm = '';
+    } else {
+      sairModoSelEsc();
     }
+    renderAll();
+  });
+  el.appendChild(card);
+}
+
+function abrirDialogoGrupoEsc(){
+  if (escSelecao.size === 0) return;
+  const idsSel = [...escSelecao];
+  const jaAgrupadas = idsSel.filter(id => grupoDaEscola(id));
+  const usadas = escGrupos.map(g => g.cor);
+  const corSugerida = VERAO_CORES.find(c => !usadas.includes(c)) || VERAO_CORES[0];
+
+  const fundo = document.createElement('div');
+  fundo.className = 'vg-backdrop';
+  fundo.innerHTML = `
+    <div class="vg-modal" role="dialog" aria-label="Novo grupo de escolas">
+      <div class="vg-head">
+        <div class="vg-title">Novo grupo de escolas</div>
+        <div class="vg-sub">${idsSel.length} escola${idsSel.length === 1 ? '' : 's'} selecionada${idsSel.length === 1 ? '' : 's'}</div>
+      </div>
+      <div class="vg-body">
+        <label class="vg-field">
+          <span>Nome do grupo</span>
+          <input type="text" id="eg-nome" maxlength="40" placeholder="Ex: Rota Zona 258">
+        </label>
+        <div class="vg-dupla">
+          <label class="vg-field">
+            <span>Frequência</span>
+            <select id="eg-freq">
+              ${VERAO_FREQS.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('')}
+            </select>
+          </label>
+          <label class="vg-field">
+            <span>Início</span>
+            <input type="date" id="eg-inicio" value="${hojeISO()}">
+          </label>
+          <label class="vg-field">
+            <span>Fim</span>
+            <input type="date" id="eg-fim" value="${fimTemporadaISO()}">
+          </label>
+        </div>
+        <div class="vg-previa" id="eg-previa"></div>
+        <div class="vg-field">
+          <span>Cor do grupo</span>
+          <div class="vg-cores" id="eg-cores">
+            ${VERAO_CORES.map(c => `<button type="button" data-cor="${c}" style="background:${c}" class="${c === corSugerida ? 'sel' : ''}"></button>`).join('')}
+          </div>
+        </div>
+        ${jaAgrupadas.length ? `<div class="vg-aviso">${jaAgrupadas.length} escola(s) já pertencem a outro grupo e serão movidas para este.</div>` : ''}
+      </div>
+      <div class="vg-foot">
+        <button class="vg-btn vg-cancel" id="eg-cancelar">Cancelar</button>
+        <button class="vg-btn vg-ok" id="eg-salvar">Criar grupo</button>
+      </div>
+    </div>`;
+  document.body.appendChild(fundo);
+
+  let cor = corSugerida;
+  fundo.querySelectorAll('#eg-cores button').forEach(b => {
+    b.addEventListener('click', () => {
+      cor = b.getAttribute('data-cor');
+      fundo.querySelectorAll('#eg-cores button').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+  });
+
+  const previa = fundo.querySelector('#eg-previa');
+  function atualizarPrevia(){
+    const f = fundo.querySelector('#eg-freq').value;
+    const di = fundo.querySelector('#eg-inicio').value;
+    const df = fundo.querySelector('#eg-fim').value;
+    const ds = gerarDatasGrupo(di, df, f);
+    if (f === 'Sob demanda'){
+      previa.innerHTML = '<b>Sem programação automática</b><span>As datas serão definidas caso a caso.</span>';
+      return;
+    }
+    if (ds.length === 0){
+      previa.innerHTML = '<b>Nenhuma data no período</b><span>Verifique as datas de início e fim.</span>';
+      return;
+    }
+    previa.innerHTML =
+      `<b>${ds.length} atendimento${ds.length === 1 ? '' : 's'} programado${ds.length === 1 ? '' : 's'}</b>` +
+      `<span>${ds.slice(0, 4).map(dataBR).join(' · ')}${ds.length > 4 ? ` … +${ds.length - 4}` : ''}</span>` +
+      `<span class="vg-previa-nota">Domingos e feriados nacionais, estaduais e municipais são pulados.</span>`;
+  }
+  ['#eg-freq', '#eg-inicio', '#eg-fim'].forEach(sel => {
+    fundo.querySelector(sel).addEventListener('change', atualizarPrevia);
+  });
+  atualizarPrevia();
+
+  const fechar = () => fundo.remove();
+  fundo.addEventListener('click', e => { if (e.target === fundo) fechar(); });
+  fundo.querySelector('#eg-cancelar').addEventListener('click', fechar);
+  fundo.querySelector('#eg-nome').focus();
+
+  fundo.querySelector('#eg-salvar').addEventListener('click', () => {
+    const nome = fundo.querySelector('#eg-nome').value.trim() || `Grupo ${escGrupos.length + 1}`;
+    const freq = fundo.querySelector('#eg-freq').value;
+    const inicio = fundo.querySelector('#eg-inicio').value || hojeISO();
+    const fim = fundo.querySelector('#eg-fim').value || fimTemporadaISO();
+    const datas = gerarDatasGrupo(inicio, fim, freq);
+
+    escGrupos.forEach(g => { g.escolas = g.escolas.filter(id => !escSelecao.has(id)); });
+    const removidosAgora = escGrupos.filter(g => g.escolas.length === 0).map(g => g.id);
+    escGrupos = escGrupos.filter(g => g.escolas.length > 0);
+
+    const novo = { id: 'e' + Date.now().toString(36), nome, freq, cor, inicio, fim, datas, escolas: idsSel };
+    escGrupos.push(novo);
+    salvarGruposEsc();
+    sairModoSelEsc();
+    fechar();
+    renderAll();
+
+    Promise.all([enviarGrupoEsc(novo)].concat(
+      escGrupos.filter(g => g.id !== novo.id).map(enviarGrupoEsc),
+      removidosAgora.map(apagarGrupoEsc)
+    )).then(() => renderEscolasPainel());
+  });
+}
+
+function excluirGrupoEsc(gid){
+  const g = escGrupos.find(x => x.id === gid);
+  if (!g) return;
+  if (!confirm(`Excluir o grupo "${g.nome}"? As ${g.escolas.length} escola(s) voltam ao padrão.`)) return;
+  escGrupos = escGrupos.filter(x => x.id !== gid);
+  salvarGruposEsc();
+  pintarEscolas();
+  renderAll();
+  apagarGrupoEsc(gid).then(() => renderEscolasPainel());
+}
+
+function exportarGruposEscExcel(){
+  if (escGrupos.length === 0){ alert('Nenhum grupo criado ainda.'); return; }
+  const esc = v => {
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const cab = ['Grupo','Frequencia','Data_Inicio','Data_Fim','Qtd_Escolas','Qtd_Atendimentos',
+               'ID_Escola','Zona','Escola','Endereco','Eleitores','Secoes','SUB','Subprefeitura',
+               'Latitude','Longitude','Datas_Programadas'];
+  const linhas = [cab.join(';')];
+  escGrupos.forEach(g => {
+    const datasTxt = (g.datas || []).map(dataBR).join(' | ');
+    g.escolas.forEach(id => {
+      const e = ESCOLAS.find(x => String(x.id) === String(id));
+      if (!e) return;
+      linhas.push([g.nome, g.freq, dataBR(g.inicio), dataBR(g.fim),
+        g.escolas.length, (g.datas || []).length,
+        e.id, e.zona, e.nome, e.endereco, e.eleitores, e.secoes,
+        e.sub, nomeSub(e.sub),
+        String(e.lat).replace('.', ','), String(e.lon).replace('.', ','),
+        datasTxt].map(esc).join(';'));
+    });
+  });
+  const blob = new Blob(['\ufeff' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CPLU_EscolasEleitorais_grupos_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function renderEscolasPainel(){
+  const alvo = document.getElementById('escolas-painel');
+  if (!alvo) return;
+  if (!state.escolasMod || state.subs.size === 0){ alvo.innerHTML = ''; return; }
+
+  const naSub = ESCOLAS.filter(e => state.subs.has(e.sub));
+  let html = `<div class="block"><div class="block-label">Grupos de limpeza</div>`;
+
+  if (escGrupos.length === 0){
+    html += `<div class="verao-meta">Nenhum grupo criado. Use "Selecionar escolas" para montar o primeiro.</div>`;
+  } else {
+    html += '<div class="vg-list">';
+    escGrupos.forEach(g => {
+      const noFiltro = g.escolas.filter(id => naSub.some(e => String(e.id) === String(id))).length;
+      html += `<div class="vg-row${noFiltro ? '' : ' fora'}">
+        <span class="vg-dot" style="background:${escapeHtml(g.cor)}"></span>
+        <span class="vg-info">
+          <span class="vg-nome">${escapeHtml(g.nome)}</span>
+          <span class="vg-meta">${escapeHtml(g.freq)} · ${g.escolas.length} escola${g.escolas.length === 1 ? '' : 's'}${(g.datas && g.datas.length) ? ' · ' + g.datas.length + ' atend.' : ''}${noFiltro ? '' : ' · fora do filtro'}</span>
+          ${(() => { const px = proximaDataGrupo(g); return px
+            ? `<span class="vg-prox">Próximo: ${escapeHtml(dataBR(px))}</span>` : ''; })()}
+        </span>
+        <span class="vg-acoes">
+          <span class="vg-acao" data-efocar="${escapeHtml(g.id)}" title="Enquadrar no mapa">⤢</span>
+          <span class="vg-acao del" data-eexcluir="${escapeHtml(g.id)}" title="Excluir grupo">✕</span>
+        </span>
+      </div>`;
+    });
+    html += '</div>';
+    html += `<div class="vg-tools">
+      <span class="vg-tool" id="eg-excel">exportar excel</span>
+      <span class="vg-tool" id="eg-imprimir">imprimir grupos</span>
+      <span class="vg-tool" id="eg-sync">atualizar</span>
+      <span class="vg-status ${escOnline ? 'on' : 'off'}">${escOnline ? 'compartilhado' : 'local'}</span>
+    </div>`;
+  }
+
+  if (escModoSel){
+    html += `<div class="vg-selbar">
+      <div class="vg-selcount">${escSelecao.size} escola${escSelecao.size === 1 ? '' : 's'} selecionada${escSelecao.size === 1 ? '' : 's'}</div>
+      <div class="vg-selhint">Clique nas escolas do mapa ou na lista abaixo.</div>
+      <div class="vg-selbtns">
+        <button class="vg-btn vg-ok" id="eg-criar" ${escSelecao.size ? '' : 'disabled'}>Definir frequência</button>
+        <button class="vg-btn vg-cancel" id="eg-sair">Cancelar</button>
+      </div>
+    </div>`;
+  } else {
+    html += `<button class="vg-btn vg-sel" id="eg-modo">Selecionar escolas</button>`;
+  }
+  html += '</div>';
+
+  // Lista de escolas por subprefeitura
+  html += `<div class="block"><div class="block-label">Locais de votação</div>
+    <div class="verao-list">`;
+  ['AD','IP','JA'].forEach(s => {
+    const doSub = naSub.filter(e => e.sub === s).sort((a, b) => a.zona - b.zona || a.nome.localeCompare(b.nome));
+    if (doSub.length === 0) return;
+    html += `<div class="verao-sub">${escapeHtml(s)} — ${escapeHtml(nomeSub(s))} · ${doSub.length}</div>`;
+    doSub.forEach(e => {
+      const g = grupoDaEscola(e.id);
+      const sel = escSelecao.has(e.id);
+      html += `<div class="verao-item${sel ? ' sel' : ''}" data-eid="${escapeHtml(String(e.id))}">
+        <span class="vi-id" style="${g ? `background:${escapeHtml(g.cor)}33;color:${escapeHtml(g.cor)}` : ''}">${escapeHtml(String(e.zona))}</span>
+        <span class="vi-local">${escapeHtml(e.nome)}
+          <span class="vi-sub2">${escapeHtml(e.endereco)} · ${e.eleitores.toLocaleString('pt-BR')} eleitores</span>
+          ${g ? `<span class="vi-grupo" style="color:${escapeHtml(g.cor)}">${escapeHtml(g.nome)} · ${escapeHtml(g.freq)}</span>` : ''}
+        </span>
+      </div>`;
+    });
+  });
+  html += '</div></div>';
+  alvo.innerHTML = html;
+
+  const q = sel => alvo.querySelector(sel);
+  if (q('#eg-modo')) q('#eg-modo').addEventListener('click', () => {
+    escModoSel = true; renderEscolasPainel(); pintarEscolas();
+  });
+  if (q('#eg-sair')) q('#eg-sair').addEventListener('click', () => { sairModoSelEsc(); renderEscolasPainel(); });
+  if (q('#eg-criar')) q('#eg-criar').addEventListener('click', abrirDialogoGrupoEsc);
+  if (q('#eg-excel')) q('#eg-excel').addEventListener('click', exportarGruposEscExcel);
+  if (q('#eg-imprimir')) q('#eg-imprimir').addEventListener('click', () => {
+    entrarModoImpressao().then(() => window.print());
+  });
+  if (q('#eg-sync')) q('#eg-sync').addEventListener('click', async (e) => {
+    e.target.textContent = 'atualizando...';
+    await baixarGruposEsc();
+    pintarEscolas();
+    renderAll();
+  });
+
+  alvo.querySelectorAll('[data-eexcluir]').forEach(b => {
+    b.addEventListener('click', ev => { ev.stopPropagation(); excluirGrupoEsc(b.getAttribute('data-eexcluir')); });
+  });
+  alvo.querySelectorAll('[data-efocar]').forEach(b => {
+    b.addEventListener('click', ev => {
+      ev.stopPropagation();
+      const g = escGrupos.find(x => x.id === b.getAttribute('data-efocar'));
+      if (!g) return;
+      const pts = ESCOLAS.filter(e => g.escolas.some(id => String(id) === String(e.id)));
+      if (pts.length === 0) return;
+      map.fitBounds(L.latLngBounds(pts.map(e => [e.lat, e.lon])), { padding: [60, 60], maxZoom: 16 });
+    });
+  });
+  alvo.querySelectorAll('.verao-item').forEach(row => {
+    row.addEventListener('click', () => {
+      const eid = row.getAttribute('data-eid');
+      if (escModoSel){
+        const chave = ESCOLAS.find(e => String(e.id) === eid);
+        if (!chave) return;
+        if (escSelecao.has(chave.id)) escSelecao.delete(chave.id);
+        else escSelecao.add(chave.id);
+        pintarEscolas();
+        renderEscolasPainel();
+        return;
+      }
+      const e = ESCOLAS.find(x => String(x.id) === eid);
+      if (!e) return;
+      map.flyTo([e.lat, e.lon], 17, { duration: 0.6 });
+    });
   });
 }
 
@@ -3565,7 +4016,12 @@ function renderServiceCards(){
       state.searchTerm = '';
       state.extraSearchTerm = '';
       state.service = wasActive ? null : svc.id;
-      if (state.service) state.planoVerao = false;   // modos mutuamente exclusivos
+      if (state.service){
+        // Serviço, Plano Verão e Escolas Eleitorais são mutuamente exclusivos
+        state.planoVerao = false;
+        state.escolasMod = false;
+        sairModoSelEsc();
+      }
       renderAll();
     });
     el.appendChild(card);
@@ -4090,6 +4546,45 @@ function renderLegend(){
     box.classList.add('legend-vazia');
   };
 
+  // Escolas Eleitorais: a legenda lista os grupos e suas escolas
+  if (state.escolasMod){
+    const naSub = ESCOLAS.filter(e => state.subs.has(e.sub));
+    const grupos = escGrupos
+      .map(g => ({ g, itens: g.escolas
+        .map(id => naSub.find(e => String(e.id) === String(id)))
+        .filter(Boolean) }))
+      .filter(x => x.itens.length > 0);
+
+    if (state.subs.size === 0 || grupos.length === 0){ esconder(); return; }
+
+    box.style.display = 'block';
+    box.classList.remove('legend-vazia');
+    if (head) head.childNodes[0].nodeValue = 'Grupos de escolas ';
+
+    grupos.forEach(({ g, itens }) => {
+      const cab = document.createElement('div');
+      cab.className = 'legend-item legend-grupo';
+      cab.innerHTML =
+        `<span class="sw" style="background:${escapeHtml(g.cor)}"></span>` +
+        `<span><b>${escapeHtml(g.nome)}</b><br>` +
+        `<span class="lg-meta">${escapeHtml(g.freq)}` +
+        `${g.inicio ? ' · ' + escapeHtml(dataBR(g.inicio)) : ''}${g.fim ? ' a ' + escapeHtml(dataBR(g.fim)) : ''}` +
+        ` · ${itens.length} escola${itens.length === 1 ? '' : 's'}` +
+        `${(g.datas && g.datas.length) ? ' · ' + g.datas.length + ' atendimentos' : ''}</span></span>`;
+      body.appendChild(cab);
+
+      itens.forEach(e => {
+        const item = document.createElement('div');
+        item.className = 'legend-item legend-ponto';
+        item.innerHTML = `<span class="lg-id">${escapeHtml(String(e.zona))}</span><span>${escapeHtml(e.nome)}</span>`;
+        item.style.cursor = 'pointer';
+        item.addEventListener('click', () => { map.flyTo([e.lat, e.lon], 17, { duration: 0.6 }); });
+        body.appendChild(item);
+      });
+    });
+    return;
+  }
+
   // Plano Verão: a legenda lista os grupos de limpeza e seus pontos
   if (state.planoVerao){
     const pontosVisiveis = PLANO_VERAO.filter(p => state.subs.has(p.sub));
@@ -4370,8 +4865,10 @@ function renderAll(){
   renderSubTabs();
   renderHeader();
   renderServiceCards();
+  renderEscolasCards();
   renderVeraoCards();
   renderFiltersArea();
+  renderEscolasPainel();
   renderVeraoPainel();
   renderLegend();
   applyFilters();
@@ -4380,6 +4877,7 @@ function renderAll(){
   renderSectorColor();
   renderActionButtons();
   updateEcopontosVisibility();
+  pintarEscolas();
   updateEscolasVisibility();
   updateApoioVisibility();
   updateVeraoVisibility();
@@ -4558,11 +5056,15 @@ function restaurarDaURL(){
 
 // ---------- Impressao ----------
 function prepararImpressao(){
-  const svc = state.planoVerao
+  const svc = state.escolasMod
+    ? 'Escolas Eleitorais — Locais de Votação'
+    : state.planoVerao
     ? 'Plano Verão — Pontos de Alagamento'
     : (state.service ? serviceById[state.service].nome : 'Nenhum serviço selecionado');
   const subs = [...state.subs].sort().map(s => `${s} — ${nomeSub(s)}`).join(' · ') || 'Nenhuma subprefeitura';
-  const visiveis = state.planoVerao
+  const visiveis = state.escolasMod
+    ? ESCOLAS.filter(e => state.subs.has(e.sub)).length
+    : state.planoVerao
     ? PLANO_VERAO.filter(p => state.subs.has(p.sub)).length
     : (state.service
         ? featureRefs.filter(f => f.serviceId === state.service && f.layer._isVisible).length
@@ -4576,6 +5078,8 @@ function prepararImpressao(){
   if (state.mostrarHoje)  filtros.push('Destaque: execução de hoje');
   if (state.planoVerao && veraoGrupos.length)
     filtros.push(`${veraoGrupos.length} grupo(s) de limpeza`);
+  if (state.escolasMod && escGrupos.length)
+    filtros.push(`${escGrupos.length} grupo(s) de escolas`);
 
   // Legenda: sobreposta quando cabe; abaixo do mapa (em colunas) quando ha
   // setores demais para o canto do mapa comportar.
