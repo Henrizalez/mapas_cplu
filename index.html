@@ -2512,7 +2512,6 @@ PLANO_VERAO.forEach(p => {
 });
 carregarGruposVerao();
 pintarMarcadoresVerao();
-carregarGruposEsc();
 
 function updateVeraoVisibility(){
   veraoMarkers.forEach(({ marker, ponto }) => {
@@ -3558,6 +3557,9 @@ function pintarEscolas(){
     );
   });
 }
+
+// Só aqui: as variáveis do módulo já existem neste ponto do script
+carregarGruposEsc();
 
 function updateEscolasVisibility(){
   escolaMarkers.forEach(({ marker, sub }) => {
